@@ -15,6 +15,21 @@ add_test(
 # and assert each still MATCHES something (a rule that matches nothing has rotted
 # and would wave every fork through). Once a bootstrapped project deletes it, the
 # same script becomes a plain enforcement check with nothing to wire up.
+# The [SIM] purity lint (tools/lint/sim_purity.sh). Registered standalone, for
+# the same reason version-parse-selftest is: it is a script, not a
+# `<dir>-test` executable, so it must not go through the auto-discovery foreach
+# below — that loop looks for a test.cpp and would skip a directory holding only
+# a shell script, silently registering nothing.
+#
+# No fixtures: it reads the source tree and talks to nothing.
+#
+# ⚠ ctest runs this by path, with no interpreter, so the file must keep mode
+# 100755. check_artifacts.cmake rule B5 enforces that for every tracked *.sh.
+add_test(
+  NAME sim-purity
+  COMMAND ${PROJECT_SOURCE_DIR}/tools/lint/sim_purity.sh
+)
+
 if (EXISTS ${PROJECT_SOURCE_DIR}/NEW_PROJECT.md)
   add_test(
     NAME artifact-check-selftest

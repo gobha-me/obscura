@@ -23,7 +23,8 @@
 #
 #       set(<DEP>_INSTALL OFF)
 #
-#     as cmake/deps/fmtlib.cmake does. Nothing else is needed.
+#     Nothing else is needed. No recipe in this project is in that case any
+#     more — the ones that were (fmt, argparse) went with the demo binary.
 #
 #   Linked into the library — the library IS exported, so the dependency has to
 #   track our own install option rather than sit at a fixed value:
@@ -61,9 +62,13 @@
 # under the enclosing project's name — never its own — so a leak of this kind
 # shows up as documentation you appear to have written.
 #
-# example/public-dep/ builds a fork that has one such dependency and asserts
-# both halves, including by injecting each mistake above and confirming it goes
-# red. example/public-dep/pubdep.cmake is the worked recipe.
+# cmake/deps/termforge.cmake is this project's worked example of the second
+# case: TermForge is linked into obscura_lib, so it sets termforge_INSTALL from
+# ${PROJECT_NAME}_INSTALL and cmake/project-config.cmake.in carries the matching
+# find_dependency(termforge). To re-prove that both halves are load-bearing,
+# break one at a time — a fixed OFF stops the build during generation, and a
+# missing find_dependency produces a package whose targets are "referenced, but
+# are missing" at the consumer.
 
 find_package(Catch2 3 QUIET)
 

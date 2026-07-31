@@ -60,13 +60,22 @@ endif ()
 # install(EXPORT) cannot resolve it and this package is never produced at all.
 # See the install-visibility note in cmake/deps/catch2.cmake.
 #
-# This project's library links nothing. When yours does:
+# find_dependency, not find_package: it forwards REQUIRED/QUIET and reports a
+# miss as "package X not found because dependency Y was missing".
 #
-#   include(CMakeFindDependencyMacro)
-#   find_dependency(fmt 10 REQUIRED)
+# termforge is here because src/lib/ links termforge::lib into the exported
+# library. The link is PRIVATE, which is exactly the case the note above warns
+# about — a PRIVATE link into a static library still reaches the Targets file as
+# $<LINK_ONLY:termforge::lib>, because a consumer has to link it too. Without
+# this line a consumer's find_package(@PROJECT_NAME@) succeeds and then fails at
+# generate time with "the following imported targets are referenced, but are
+# missing: termforge::lib".
 #
-# Use find_dependency, not find_package: it forwards REQUIRED/QUIET and reports
-# a miss as "package X not found because dependency Y was missing".
+# No version floor: cmake/deps/termforge.cmake pins the fetched copy by tag, and
+# a system copy is whatever the packager shipped. Add one here the day the
+# public header depends on a specific TermForge release.
+include(CMakeFindDependencyMacro)
+find_dependency(termforge)
 
 include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
 

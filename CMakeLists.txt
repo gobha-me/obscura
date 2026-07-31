@@ -52,13 +52,20 @@ option(${PROJECT_NAME}_BUILD_BIN "Build the executable in src/bin"    ${PROJECT_
 option(${PROJECT_NAME}_TESTS     "Build and register the test suite"  ${PROJECT_IS_TOP_LEVEL})
 option(${PROJECT_NAME}_INSTALL   "Generate install / package-config rules" ${PROJECT_IS_TOP_LEVEL})
 
+# Declared here rather than in src/lib/CMakeLists.txt, where the template put
+# it, for the same reason the three above are here: the dependency list below is
+# gated on it. src/lib/ is added *after* cmake/dependencies.cmake runs, so an
+# option declared down there does not exist yet at the point the gate is
+# evaluated — and an undefined variable reads as false, which would drop
+# termforge from the list on a perfectly ordinary default build.
+option(${PROJECT_NAME}_BUILD_LIB "Build the compiled library target" ON)
+
 # Dependencies this project uses. Each name maps to cmake/deps/<name>.cmake
-# (find_package first, FetchContent fallback). This is the prune point for a new
-# project: drop a name to stop fetching that dep.
+# (find_package first, FetchContent fallback). This is the prune point: drop a
+# name to stop fetching that dep.
 set(${PROJECT_NAME}_DEPS
-  catch2    # Catch2 v3 — test framework (test/)
-  fmtlib    # fmt        — formatting   (src/bin)
-  argparse  # argparse   — CLI parsing  (src/bin)
+  catch2     # Catch2 v3 — test framework  (test/)
+  termforge  # TermForge — terminal UI     (src/lib, src/render)
 )
 
 # Component gating: a dependency that exists only to serve a target we are not
@@ -72,8 +79,13 @@ if (NOT ${PROJECT_NAME}_TESTS)
   list(REMOVE_ITEM ${PROJECT_NAME}_DEPS catch2)
 endif ()
 
-if (NOT ${PROJECT_NAME}_BUILD_BIN)
-  list(REMOVE_ITEM ${PROJECT_NAME}_DEPS fmtlib argparse)
+# termforge is gated on the LIBRARY, not the binary: src/lib/ is what links it.
+# src/bin/ is a thin entry point that only reads the generated version header,
+# so -D<name>_BUILD_BIN=OFF must not drop the toolkit out from under the
+# library. The template's block gated on BUILD_BIN because its demo deps served
+# only the executable; ours is the other case.
+if (NOT ${PROJECT_NAME}_BUILD_LIB)
+  list(REMOVE_ITEM ${PROJECT_NAME}_DEPS termforge)
 endif ()
 
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/dependencies.cmake)

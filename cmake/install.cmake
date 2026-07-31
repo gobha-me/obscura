@@ -8,7 +8,13 @@
 #
 # and have it work against an installed prefix, with the *same* target spelling
 # it would use via add_subdirectory() or FetchContent. One spelling, three
-# acquisition modes. See example/consumer/ for all three, exercised.
+# acquisition modes.
+#
+# Nothing in this repo exercises that automatically: the template's consumer
+# harness was dropped, since OBSCURA is an application rather than a library
+# anyone depends on. If you change anything here, install to a scratch prefix and
+# build a two-line project against find_package(obscura CONFIG REQUIRED) by hand
+# — AGENTS.md, "How to verify a change", has the recipe.
 #
 # Included from the root CMakeLists behind ${PROJECT_NAME}_INSTALL, which
 # defaults to PROJECT_IS_TOP_LEVEL: an embedded copy of this project must not
@@ -95,7 +101,7 @@ if (TARGET ${PROJECT_NAME}_lib)
   # is quietly wrong.
   #
   # For developing two projects side by side, use add_subdirectory() — same
-  # target spelling, no packaging involved, and example/consumer/ covers it.
+  # target spelling, no packaging involved.
 
   # ── Headers ───────────────────────────────────────────────────────────────
   # *.hpp only, which picks up the public header and the generated version

@@ -1,113 +1,72 @@
-# CPP CMake Template Project
+# OBSCURA
 
-[![CI](https://github.com/gobha-me/cpp-template/actions/workflows/ci.yml/badge.svg)](https://github.com/gobha-me/cpp-template/actions/workflows/ci.yml)
+[![CI](https://github.com/gobha-me/obscura/actions/workflows/ci.yml/badge.svg)](https://github.com/gobha-me/obscura/actions/workflows/ci.yml)
 
-> **Starting a new project from this?** Follow **[NEW_PROJECT.md](NEW_PROJECT.md)** —
-> an ordered checklist from "copied the tree" to "clean project," with the traps
-> called out. Everything below describes the template as it stands.
+A seeded deduction roguelike aboard a derelict, where rendering fidelity IS the
+game state.
 
-The basic idea is to have an easy-button copy/paste starter for new CPP projects.
-I tend to "play" around with some ideas and new features of the language
-outside of "work". CMake is the "standard" project management tool used at work,
-so creating this helps me learn more about it. At the same time I'm trying not
-to repeat myself as new project ideas come up.
+You board a dead ship with a fixed budget of attention and a case that is
+already fully determined: someone did something, somewhere, on some tick, and
+the ship remembers all of it. What you do not have is permission to see it. Every
+piece of evidence carries a fidelity level, and the run is the process of
+spending attention to raise those levels until exactly one suspect survives the
+elimination — or until you accuse the wrong one.
 
-The minimum is **CMake 3.28** (current LTS distros ship it), and projects default
-to the **C++23** standard.
+The premise is the architecture. Fidelity is not a display setting layered over
+the truth; it is simulation state, recorded and replayed and hashed like
+everything else. A plate at `Sensed` is not the `Full` plate greyed out — at that
+level the game genuinely does not know what the item is, and drawing it dimmed
+would imply information you have not paid for. That is the one design rule
+everything else follows from.
 
-Some features baked in, and the assumptions behind them:
+What that buys, and what it costs:
 
-* **Auto naming** — the default project name is pulled from the parent dir of the
-  root `CMakeLists.txt`.
-  * There was a note that this is a bad idea, but it didn't really explain the
-    details of why.
-  * This is an easy-button starter that "should" just work out of the box — just
-    update the `project()` portion of the file.
-* **Version comes from git tags** — `cmake/version.cmake` parses
-  `git describe --tags --dirty` into `MAJOR.MINOR.PATCH`, plus a `VERSION_TWEAK`
-  (commits since the tag) and `VERSION_DIRTY` flag exposed in the generated
-  `include/version.hpp`. No tags/git falls back to `0.0.0` with a reason. The
-  pure parser lives in `cmake/version_parse.cmake` and is self-tested via
-  `cmake -P cmake/version_selftest.cmake` (also a ctest: `version-parse-selftest`).
-* **C++23 by default** (GCC 13+ / Clang 19+). Note: the `std::expected` example
-  in `test/20failure-testing` needs a C++23 standard library that provides
-  `<expected>` — GCC 13+'s libstdc++, Clang 19+ with libstdc++, or any Clang with
-  libc++. Clang 18 + libstdc++ (the Ubuntu 24.04 stock pairing) can't build it, so
-  CI pins its Clang jobs to Clang 20.
-* **Compiler respects the environment** — the default toolchain
-  (`cmake/toolchain/default.cmake`) takes the compiler from `CXX` / the platform
-  default rather than forcing one. Prefer clang? Opt in via a toolchain file:
-  ```bash
-  cmake -B build -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/clang.cmake
-  ```
-* **Library pattern** in `src/lib/` — an opinionated but toggleable default:
-  a compiled `STATIC` library out of the box (disable with
-  `-D<PROJECT>_BUILD_LIB=OFF`), with the header-only (`INTERFACE`) variant shown
-  as a commented alternative for header-only projects.
-  * Its public API lives in `include/lib.hpp`, and auto-discovered tests link it
-    for you.
-  * `-D<PROJECT>_BUILD_LIB=OFF` removes the target entirely, so nothing can link
-    it — pair it with `-D<PROJECT>_TESTS=OFF` unless your tests avoid the
-    library. `cmake --install` then deposits the executable and nothing else:
-    no headers, and no package config, since there would be no exported targets
-    for it to describe.
-* **Consumable, not just buildable** — the library installs, exports and ships a
-  package config, so `find_package(<PROJECT> CONFIG)` is real. Everything that
-  is not the library (`<PROJECT>_BUILD_BIN`, `<PROJECT>_TESTS`,
-  `<PROJECT>_INSTALL`) defaults to `PROJECT_IS_TOP_LEVEL`, so a project that
-  embeds this one gets the library and nothing else — no demo executable, no
-  test suite, no install rules in someone else's prefix, and none of the
-  dependencies that only served those. See **Consume this project** below.
-* **Tests**
-  * Catch2 (v3) for writing tests. If you want a different framework, replacing
-    it is left as an exercise.
-  * Tests live in `test/`, one directory per test.
-    * `test/CMakeLists.txt` globs the dirs in this path at configure time.
-    * Can be as simple as `test/<test_name>/test.cpp`. `test/main.cpp` supplies
-      `main()`, and the target links Catch2 **and** `<PROJECT>::lib` when the
-      library target exists — so a test can include a public header from
-      `include/` and call into `src/lib/` with no build wiring of its own.
-      * This strategy makes adding tests really simple — just focus on the test
-        code.
-      * On the other hand, if the code is already built, `cmake -B` has to be
-        run again to pick up a new test dir.
-      * If you need more control over a test's build, add a `CMakeLists.txt` in
-        that dir — it then owns all of its own wiring, the library link
-        included.
-    * The numeric prefixes (`01example`, `20failure-testing`) sort that glob, so
-      they set the order tests are *registered* — the order `ctest -N` lists
-      them. They are not an execution guarantee: even a serial run reorders
-      around fixtures, and `ctest -j` ignores them outright. When one test
-      genuinely must run after another, say so with fixtures or `DEPENDS`, not
-      with names.
-    * `cmake/startup.sh` and `cmake/shutdown.sh` are the hooks for services the
-      suite depends on. They are wired in `test/CMakeLists.txt` as the `runners`
-      fixture (`FIXTURES_SETUP` / `FIXTURES_CLEANUP`), run once per `ctest`
-      invocation, and ship as no-ops — fill them in if your tests need something
-      running.
-* **Toolchains** live in `cmake/toolchain/`; the default is `default.cmake`.
-  * Default build type is Debug.
-  * Separate opt-in files enable clang or the sanitizers:
-    * `clang.cmake`
-    * `address.cmake`
-    * `thread.cmake`
-    * `undefined.cmake`
-* **Dependency management**
-  * Not using a dedicated dependency manager such as conan.io.
-    * Not using one at work at the moment.
-    * Not seeing clear, concise examples of CMake integration that fit my model
-      above.
-    * Trying, for the moment, to stay 100% CMake.
-  * Using a combination of `find_package` and `FetchContent` for managing
-    dependencies.
-    * Over time, as I build new files, I'll most likely add them here.
-  * **Opt-in, not glob-everything** — each dependency is a recipe file in
-    `cmake/deps/<name>.cmake`, but a recipe is only fetched when its name is
-    listed in `<PROJECT>_DEPS` in the root `CMakeLists.txt`. That list is the
-    single prune point for a new project: drop a name to stop fetching that dep;
-    add a recipe file *and* its name to add one.
-* **Export of the compile database** (`compile_commands.json`) is enabled by
-  default.
+* **A run is `(seed, case, intents)` and nothing else.** The world is a pure
+  function of those three. `src/replay/` records them, plays them back against a
+  fresh world, and compares a digest — so "it desynced" reports the step index
+  where determinism broke, rather than the fact that the ending differed.
+* **`src/world/` is `[SIM]` and is linted for it.** No floating point, no wall
+  clock, no ambient entropy, no hashed-container iteration order. Enforced
+  structurally by `tools/lint/sim_purity.sh`, which runs as the ctest case
+  `sim-purity` — determinism bugs reproduce perfectly until the day they do not,
+  so they are prevented rather than tested for. `tools/lint/sim_purity.sh`
+  explains what each ban is protecting.
+* **Cases are compiled-in constexpr data** (`cases/`), not files to be parsed.
+  A case that can fail to load is a case that can fail to load in front of a
+  player, and the reference solver (`src/world/solver.hpp`) can be run over every
+  shipped case at test time with nothing to mock. A case is playable only when
+  exactly one candidate survives the evidence.
+* **The renderer is downstream of state, always.** `src/render/` reads a
+  redaction projection, never the complete evidence set, so the screen cannot
+  show something the run has not paid for. Transitions are parameterised by step
+  index rather than elapsed time, so a replay renders identically to the run that
+  recorded it.
+* **The terminal is TermForge.** `src/core/` subclasses `termforge::App` and
+  routes; it decides nothing. That is what lets the whole game be driven headless
+  by the replay player, with no terminal attached.
+
+Layout, and the direction of dependency between the pieces:
+
+```
+include/obscura/   public headers, mirroring the source areas below
+src/world/         [SIM] hull, actors, incident, evidence, redaction, solver
+src/core/          the TermForge App subclass, the session FSM, the ledger
+src/render/        bands, plates, dissolve, log view
+src/input/         key map, commit gesture FSM
+src/audio/         sink interface, NullSink
+src/replay/        recorder, player, state hashing
+cases/             authored cases, as C++ constexpr data
+tools/lint/        sim_purity.sh
+```
+
+`world/` depends on nothing else here. Everything else may read it; nothing else
+may be read *by* it.
+
+Built on the cpp-template starter kit (same GitHub owner as this repo):
+CMake 3.28 minimum, C++23, GCC 13+ / Clang 19+, dependencies through
+`find_package` with a `FetchContent` fallback and no package manager. The
+build-system conventions inherited from it are documented below and in
+`AGENTS.md`.
 
 ## Cheat sheet
 
@@ -130,7 +89,7 @@ two toolchain files, so a sanitizer composes with clang via `CXX=`, as above.
 ```bash
 cp cmake/deps/catch2.cmake cmake/deps/<name>.cmake   # catch2.cmake is the annotated recipe template
 $EDITOR cmake/deps/<name>.cmake                      # find_package first, FetchContent fallback
-$EDITOR CMakeLists.txt                               # add <name> to <PROJECT>_DEPS
+$EDITOR CMakeLists.txt                               # add <name> to obscura_DEPS
 cmake -B build
 ```
 
@@ -144,8 +103,9 @@ exports: `set(<DEP>_INSTALL ${${PROJECT_NAME}_INSTALL})` in the recipe, and a
 `find_dependency(<dep>)` in `cmake/project-config.cmake.in`. Without the first,
 installing fails during generation; without the second, consumers get a package
 whose targets refer to something they cannot find. A `PRIVATE` link counts —
-visibility is not the test. The annotated recipe explains both, and
-`example/public-dep/` is a working example that is checked in CI.
+visibility is not the test. The annotated recipe (`cmake/deps/catch2.cmake`)
+explains both, and `cmake/deps/termforge.cmake` is this project's worked example
+of the case: TermForge is linked into `obscura_lib`, so it needs both lines.
 
 **Add a test**
 
@@ -157,14 +117,18 @@ cmake -B build && cmake --build build --parallel && ctest --test-dir build
 
 It becomes the target and ctest name `40myfeature-test`. **Re-run `cmake -B`
 after adding a directory** — discovery is a configure-time glob. The numeric
-prefix only sorts that glob; it does not order the run (see the Tests bullet
-above). The target links Catch2 and, when the library target exists,
-`<PROJECT>::lib` — so `#include <lib.hpp>` and call into `src/lib/` directly,
-with nothing to wire up. If a test needs custom build control, give it its own
+prefix only sorts that glob; it does not order the run. The target links Catch2
+and, when the library target exists, `obscura::lib` — so
+`#include <obscura/obscura.hpp>` and call into the game directly, with nothing to
+wire up. If a test needs custom build control, give it its own
 `test/<dir>/CMakeLists.txt`: it inherits `TEST_NAME` and `SRCS` from the parent
 scope, must define a target named exactly `${TEST_NAME}`, and must do its own
-linking — the discovery loop's link lines do not reach it (see
-`test/02example/`).
+linking — the discovery loop's link lines do not reach it.
+
+A test that is a *script* rather than a Catch2 binary is registered by hand at
+the top of `test/CMakeLists.txt`, next to `sim-purity` and
+`version-parse-selftest`. The discovery loop looks for a `test.cpp`, so a
+directory holding only a shell script would be skipped silently.
 
 **Run one test**
 
@@ -186,49 +150,53 @@ the fixtures. Tests with their own `CMakeLists.txt` build into
 
 **Consume this project from another project**
 
-Three ways in, one target name — `<PROJECT>::lib` — so switching between them
-never touches a link line.
+OBSCURA is an application, not a library anyone is expected to depend on — there
+is no `example/consumer/` harness here and no CI job proving downstream use. The
+packaging inherited from the template is still real and still tested by the
+install below, so if you do want to link `obscura::lib` (to drive a run headless,
+say), all three acquisition modes work and spell the target identically:
 
 ```cmake
-# 1. vendored / submoduled
-add_subdirectory(third_party/<project>)
+add_subdirectory(third_party/obscura)              # 1. vendored / submoduled
 
-# 2. FetchContent
-include(FetchContent)
-FetchContent_Declare(<project>
-  GIT_REPOSITORY <url>
-  GIT_TAG        v1.2.3
-  SOURCE_DIR     ${FETCHCONTENT_BASE_DIR}/<project>   # ← see below
+include(FetchContent)                              # 2. FetchContent
+FetchContent_Declare(obscura
+  GIT_REPOSITORY https://github.com/gobha-me/obscura.git
+  GIT_TAG        v0.1.0
+  SOURCE_DIR     ${FETCHCONTENT_BASE_DIR}/obscura  # ← see below
 )
-FetchContent_MakeAvailable(<project>)
+FetchContent_MakeAvailable(obscura)
 
-# 3. installed
-find_package(<project> CONFIG REQUIRED)
+find_package(obscura CONFIG REQUIRED)              # 3. installed
 
-target_link_libraries(app PRIVATE <project>::lib)     # all three, unchanged
+target_link_libraries(app PRIVATE obscura::lib)    # all three, unchanged
 ```
 
-⚠ **Pin `SOURCE_DIR` in the FetchContent case.** This project takes its name
-from its directory, and FetchContent checks out into `<base>/<name>-src` — so
-without that line the project comes out named `<name>-src` and the target you
-have to link is `<name>-src::lib`. This applies to any directory-named project,
-not just this one.
+⚠ **Pin `SOURCE_DIR` in the FetchContent case.** This project takes its name from
+its directory, and FetchContent checks out into `<base>/obscura-src` — so without
+that line the project comes out named `obscura-src` and the target you have to
+link is `obscura-src::lib`. This applies to any directory-named project, not just
+this one.
 
-You inherit the include directory *and* C++23 as usage requirements of the
-target; a consumer sets neither. `example/consumer/` is a working downstream
-project that builds all three ways, and `example/consumer/verify.sh` runs them.
+You inherit the include directory, C++23, *and* TermForge as usage requirements
+of the target; a consumer sets none of them. The TermForge half is why
+`cmake/project-config.cmake.in` carries `find_dependency(termforge)` — a
+consumer of an installed OBSCURA needs TermForge findable, and `find_package`
+says so up front rather than failing at generate time.
 
 **Install it**
 
 ```bash
-cmake -B build -DCMAKE_INSTALL_PREFIX=/opt/<project>
+cmake -B build -DCMAKE_INSTALL_PREFIX=/opt/obscura
 cmake --build build --parallel
 cmake --install build
 ```
 
-Installs the library, `include/*.hpp`, the executable, and a package config at
-`<prefix>/lib/cmake/<project>/`. Build with `-D<PROJECT>_BUILD_BIN=OFF
--D<PROJECT>_TESTS=OFF` for a library-only install.
+Installs the library, `include/obscura/*.hpp`, the executable, and a package
+config at `<prefix>/lib/cmake/obscura/`. Build with `-Dobscura_BUILD_BIN=OFF
+-Dobscura_TESTS=OFF` for a library-only install. TermForge is installed into the
+same prefix — it is part of what this package exports, so leaving it out would
+produce a package that cannot be used.
 
 Three things worth knowing before you depend on it:
 
@@ -239,13 +207,14 @@ Three things worth knowing before you depend on it:
   `add_subdirectory` — same target name, no packaging in the way.
 * The version in the package config comes from `git describe` at configure time.
   A build with no reachable tags reports `0.0.0`, and a consumer's
-  `find_package(<project> 1.2.3 CONFIG REQUIRED)` is then refused — correctly,
+  `find_package(obscura 1.2.3 CONFIG REQUIRED)` is then refused — correctly,
   but the real cause is usually a shallow clone. Compatibility is
   `SameMajorVersion`.
-* Headers install flat into `<prefix>/include`, generated `version.hpp`
-  included. That header declares *unprefixed* constants (`PROGRAM_NAME`,
-  `VERSION_MAJOR`, …). A project expecting wide consumption should move its
-  headers under `include/<project>/` first.
+* Public headers live under `include/obscura/` and install there, which keeps
+  them out of a consumer's top-level include namespace. The generated
+  `version.hpp` is the exception: it lands flat in `<prefix>/include` and
+  declares *unprefixed* constants (`PROGRAM_NAME`, `VERSION_MAJOR`, …), so it can
+  collide. It is internal — nothing in `include/obscura/` includes it.
 
 **Cut a release tag**
 
@@ -270,23 +239,15 @@ pull request, enforcing the "both compilers, always" rule:
 * **GCC and Clang** ×
 * the **default** toolchain plus every sanitizer (**address**, **thread**,
   **undefined**) — 8 build/test jobs in all,
-* a **library disabled** job, covering the `-D<PROJECT>_BUILD_LIB=OFF` path the
+* a **library disabled** job, covering the `-Dobscura_BUILD_LIB=OFF` path the
   matrix never takes — it installs as well as builds, and asserts the prefix
   gets the executable and nothing else,
-* two **consumer** jobs (one per compiler) building `example/consumer/` against
-  this project three ways — the only coverage of the consumed, not-top-level
-  path,
-* a **public dependency** job, which synthesises a fork whose library links a
-  fetched dependency and checks the install/export files survive it — the one
-  shape this project cannot exercise as itself,
 * plus a fast, dependency-free `version-parse-selftest` job.
 
 A change that only builds on one compiler turns that compiler's jobs red, so a
 one-sided break is visible on the PR.
 
-**Copying this into a new project:** the workflow hardcodes nothing
-project-specific — the project name is derived from the checkout directory, so
-copy `.github/workflows/ci.yml` verbatim, and keep `fetch-depth: 0` or
-`git describe` stops finding tags. The one edit a fork owes CI is the badge URL
-above; that step and everything else a new project must change live in
-[NEW_PROJECT.md](NEW_PROJECT.md).
+The workflow hardcodes nothing project-specific — the project name is derived
+from the checkout directory. **Keep `fetch-depth: 0`** or `git describe` stops
+finding tags and every build reports version `0.0.0`, which also makes the
+installed package refuse a versioned `find_package`.
