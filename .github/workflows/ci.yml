@@ -72,8 +72,19 @@ jobs:
           -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/${{ matrix.toolchain }}
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
+      # --parallel 2, not bare --parallel. This is a deliberate deviation from
+      # cpp-template's "copy ci.yml verbatim" rule, and it is load-bearing here:
+      # bare --parallel means nproc, which is 4 on a standard runner, and four
+      # concurrent GCC compilations of Catch2's translation units plus TermForge
+      # exhaust the runner. It fails as "The runner has received a shutdown
+      # signal" / exit 143 partway through Catch2 — which reads like flaky
+      # infrastructure rather than resource exhaustion, and cost an afternoon to
+      # attribute. Clang survives it; GCC does not.
+      #
+      # The template does not hit this because it fetches only Catch2. OBSCURA
+      # adds TermForge, which roughly doubles the compile load.
       - name: Build
-        run: cmake --build build --parallel
+        run: cmake --build build --parallel 2
 
       - name: Test
         # Runs the Catch2 suites, the sanitizer engagement smoke test, and the
@@ -106,7 +117,7 @@ jobs:
           set -euo pipefail
           NAME=$(basename "$GITHUB_WORKSPACE")
           cmake -B build "-D${NAME}_BUILD_LIB=OFF" "-D${NAME}_TESTS=OFF"
-          cmake --build build --parallel
+          cmake --build build --parallel 2
           cmake --install build --prefix "$PWD/prefix"
 
           # With no library there is nothing to export, so the package config
