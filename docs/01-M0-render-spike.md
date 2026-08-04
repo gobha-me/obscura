@@ -91,3 +91,35 @@ If nobody leans in, write down why and stop — the answer is worth a week eithe
 > badly, and it is opaque where this spec calls for 4 colours **+ transparent**.
 > It demonstrates the mechanism; it does not predict what authored art will cost.
 > Measure the real plate.
+>
+> **Correction (2026-08-04, later).** The real plate is measured, and the
+> **"one static art plate"** task is done — issue #21. `assets/plates/hold-d0.png`
+> is baked by `tools/venice-bake/`, compiled in as a `constexpr` array, and its
+> on-wire cost is asserted against the meter by **`test/11art-plate`, which owns
+> that figure**. It is not restated here, for the reason the block above gives
+> about 16,344.
+>
+> What is worth recording here is the *shape* of the answer rather than the
+> number. Authored 4-colour art compresses far better than upstream's synthetic
+> probe did — flat fills and periodic dither are what deflate is good at — so
+> the plate lands well inside the budget with room to spare. Do not spend that
+> room in advance: #23's dissolve budget is a separate 40 KB, and the headroom
+> here says nothing about a plate at damage 2 with heavy scorch dither.
+>
+> Two corrections to the block above, both verified against the pinned v0.7.1
+> source rather than against upstream's status notes:
+>
+> - **`image_transmit` includes the APC framing.** `KittyDriver::draw_image`
+>   tallies the whole byte range it appends around `transmit()`, so the meter
+>   reports base64 *plus* framing. Upstream's 5,272 figure is base64 alone; the
+>   metered number for that payload is 5,324. Both are right about different
+>   quantities, and issue #21's comment thread has them the other way round.
+> - **The 8 KB cap is on-wire, and the wire carries the placement too.** The
+>   payload therefore has to fit in rather less than 8,192 once the cursor
+>   address and `a=p` are paid — which is why the configure-time gate in
+>   `src/lib/CMakeLists.txt` is tighter than transmit-only arithmetic suggests.
+>
+> Still open and still worth knowing: **240x160 px does not map onto the 22x9
+> compartment box** of `docs/10-tile-grammar.md`, and no document reconciles
+> them. The test derives its rect from `image_cell_extent()` so it bakes in
+> neither number, and the conflict is filed rather than silently resolved.

@@ -46,3 +46,8 @@ include/version.hpp
 *.exe
 *.out
 *.app
+
+# Python bytecode. tools/venice-bake/ is author-time tooling; nothing here is
+# imported as a module by design, but an interpreter that does will leave these.
+__pycache__/
+*.pyc

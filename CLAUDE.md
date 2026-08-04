@@ -62,8 +62,15 @@ src/world/  [SIM]  hull, actors,         src/input/     key map, commit gesture 
                    redaction, solver     src/replay/    recorder, player, state hashing
 cases/             authored cases as     test/corpus/   golden *.replay fixtures
                    C++ constexpr data
-tools/lint/        sim_purity.sh         tools/         venice-bake, replay-verify
+assets/plates/     baked art plates,     tools/lint/    sim_purity.sh
+                   archetype x damage    tools/         venice-bake, replay-verify
 ```
+`assets/plates/*.png` are committed and are the source of truth for the art.
+They are compiled into the library as `constexpr` byte arrays by
+`cmake/embed_asset.cmake` — nothing reads a file at runtime — and each one has a
+size budget set at the call site in `src/lib/CMakeLists.txt`, enforced at
+configure time. `tools/venice-bake/` is the recipe; `plate-bake-check` is the
+CTest case that stops the two from drifting apart.
 `[SIM]` is the determinism firewall, and it is **two** directories: the sources
 in `src/world/` and the public headers they declare their types in,
 `include/obscura/world/`. `tools/lint/sim_purity.sh` runs as a CTest case over

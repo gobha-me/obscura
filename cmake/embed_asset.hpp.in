@@ -1,0 +1,23 @@
+// GENERATED FILE — do not edit, and do not commit.
+//
+// Produced at configure time by cmake/embed_asset.cmake from
+//   @OBSCURA_EMBED_SOURCE@
+// which is the committed asset and the only source of truth. Edit that (via
+// tools/venice-bake/) and re-run cmake; anything written here is overwritten.
+//
+// It lives in the build tree and reaches exactly one translation unit: the
+// generated directory is on obscura_lib's PRIVATE include path, so a public
+// header that names this file does not compile for a consumer. That is the
+// mechanism, not a convention.
+
+#pragma once
+
+#include <array>
+
+namespace obscura::render::detail {
+
+inline constexpr std::array<unsigned char, @OBSCURA_EMBED_SIZE@> @OBSCURA_EMBED_SYMBOL@{
+@OBSCURA_EMBED_BYTES@
+};
+
+}  // namespace obscura::render::detail
