@@ -62,6 +62,35 @@ fixture — bug reports arrive as playable artifacts.
 
 > **Correction (2026-07-31).** The bandwidth gate's "T-H4's meter" is now
 > [gobha-me/termforge#139](https://github.com/gobha-me/termforge/issues/139).
+>
+> **Correction (2026-08-04).** The meter **landed** — #139 shipped in termforge
+> v0.6.8, and this repo pins v0.7.1 as of today. Read it off the driver as
+> `last_frame_bytes()` / `total_bytes()`, from inside an `App` subclass.
+>
+> **The idle-frame limit in the Bandwidth row is not assertable yet, and writing
+> it today would give you a permanently red suite.** Measured through OBSCURA's
+> own `on_render` offline, a full 80x24 repaint costs **16,344 bytes** — eight
+> times the 2 KB figure. The cause is not our code: the renderer calls the driver
+> once per changed cell, and the driver emits an absolute cursor address before
+> each one, so a blank cell costs 5 bytes of escape plus the digits of its row
+> and column — 8.5 on average at this grid size, and more as the grid grows.
+> The dominant term is addressing, not content. Reaching 2 KB needs per-layer
+> damage tracking (T-B2,
+> [termforge#142](https://github.com/gobha-me/termforge/issues/142), still open)
+> and/or run coalescing upstream.
+>
+> What `test/10frame-bytes` asserts instead, all of it true today: the frame cost
+> matches what the wire format independently predicts, every byte is billed to
+> `cells` while no plates are drawn, and **a repeated identical frame costs
+> exactly zero**. That last one is the property the whole idle budget rests on.
+>
+> **That test owns the number, and this row does not.** Re-baseline when #142
+> lands by changing it there and letting this row keep pointing at it — a figure
+> copied into four documents is a figure that will disagree with itself.
+>
+> One trap for whoever checks this: termforge's own status notes quote ~5.1 KB
+> for a 120x40 repaint, which looks like it contradicts 16,344 at 80x24. It does
+> not — that measurement is a diffed steady-state frame, not a first paint.
 
 ## Failure playbook
 A hash divergence between compilers or optimisation levels is almost never

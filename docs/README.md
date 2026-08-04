@@ -122,3 +122,36 @@ termforge's `examples/`**, where the test harness and both-compiler CI already
 are. M0 is tracked here as issues, not built here. See DR-10 in
 `07-decision-records.md` — the repo is private through the M0 gate so a failure
 can still be quiet.
+
+---
+
+# Corrections (2026-08-04)
+
+The section above is left exactly as written on 2026-07-31 — its value is that it
+records what was believed at the time. Two of its claims have since moved.
+
+### The pin is v0.7.1, not v0.6.3
+Fourteen tags and 37 commits on. The upgrade was drop-in for us: termforge's
+`core/app.hpp` is byte-identical between the two tags, as are its top-level
+`CMakeLists.txt` and all of `cmake/` — so the consumption contract (the
+`termforge::lib` target, the four `termforge_*` options, the 3.28 floor) did not
+move. The only termforge API the *library* touches is `termforge::App`,
+`on_render(Screen&)` and `Screen::clear()`; `test/10frame-bytes` additionally
+uses the meter and the offline `test_run_frames` harness.
+
+### T-H4 (#139) has LANDED, and the idle-frame budget has not
+The meter shipped in v0.6.8 — `FrameBytes{cells, image_transmit, image_edit}`,
+read as `last_frame_bytes()` / `total_bytes()`. `test/10frame-bytes` is its first
+consumer here and the first test over this repo's own code.
+
+What it measured is the news: **a full 80x24 repaint costs 16,344 bytes**, eight
+times §7.7's 2 KB idle ceiling, because the fallback driver emits an absolute
+cursor address before every cell the renderer hands it. That ceiling is now
+blocked on T-B2 (#142), not on the meter. **Do not write the 2 KB assertion
+yet** — see `08-determinism.md`. The number itself lives in
+`test/10frame-bytes`, which is the only copy that goes red when it moves; every
+mention in `docs/` is a pointer to it.
+
+Separately, #163 (v0.6.9) added a pre-encoded PNG transmit path, which retires
+the "a 240x160 plate costs 205 KB" risk: a plate of that size ships at ~5.3 KB.
+See `01-M0-render-spike.md` for the corrected plate budget.
