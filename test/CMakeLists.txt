@@ -36,6 +36,59 @@ add_test(
   COMMAND ${PROJECT_SOURCE_DIR}/tools/lint/sim_purity.sh
 )
 
+# The art plate's drift check (tools/venice-bake/bake.py --check). Standalone
+# for the same reason as sim-purity: it is a script, not a `<dir>-test`.
+#
+# assets/plates/*.png is committed and tools/venice-bake/ is the recipe that
+# produces it. Nothing else compares the two, so without this case, editing the
+# baker and forgetting to re-bake is green forever — the build embeds the stale
+# asset and the tests measure it happily. This is the whole reason baking can
+# stay a manual author-time step instead of a build dependency on python3.
+#
+# ⚠ Invoked through ${Python3_EXECUTABLE}, NOT by path — unlike a *.sh, a
+# tracked *.py has no rule enforcing its executable bit (check_artifacts.cmake
+# rule B5 matches *.sh only), so running it by path would break on any checkout
+# that did not preserve modes.
+#
+# Missing python3 registers the case as a FAILING test rather than skipping it,
+# and that is the whole design of this block.
+#
+# Skipping it (`if (Python3_FOUND) add_test(...)`) would quietly drop the check
+# on any machine without an interpreter: one fewer test in a green run, a
+# configure warning scrolling past in a two-thousand-line log, and from there
+# the asset and its recipe drift apart indefinitely while a test NAME in the
+# tree suggests otherwise — the exact failure this case exists to prevent.
+#
+# But a FATAL_ERROR would be worse in the other direction: it makes python3 a
+# hard dependency of configuring the whole project, which contradicts both
+# bake.py's own "the build never invokes it" and CLAUDE.md's Baseline, where the
+# toolchain is a compiler, CMake and Catch2 and nothing else. Nobody should lose
+# a build over an art-authoring tool.
+#
+# A registered-but-red test is the honest middle: the build works, the suite
+# reports exactly what stopped being checked, and the count does not silently
+# change. WILL_FAIL inverts the echo's success, so the message lands in
+# `ctest --output-on-failure`.
+find_package(Python3 COMPONENTS Interpreter QUIET)
+if (Python3_FOUND)
+  add_test(
+    NAME plate-bake-check
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/tools/venice-bake/bake.py
+            --check ${PROJECT_SOURCE_DIR}/assets/plates/hold-d0.png
+  )
+else ()
+  add_test(
+    NAME plate-bake-check
+    COMMAND ${CMAKE_COMMAND} -E echo
+      "plate-bake-check: python3 was not found, so nothing verified that "
+      "assets/plates/*.png still match the recipes in tools/venice-bake/. "
+      "Install python3 — the standard library is enough, the baker imports "
+      "zlib and struct and nothing else."
+  )
+  set_tests_properties(plate-bake-check PROPERTIES WILL_FAIL TRUE)
+endif ()
+
 if (EXISTS ${PROJECT_SOURCE_DIR}/NEW_PROJECT.md)
   add_test(
     NAME artifact-check-selftest

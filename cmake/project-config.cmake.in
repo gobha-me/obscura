@@ -64,12 +64,13 @@ endif ()
 # miss as "package X not found because dependency Y was missing".
 #
 # termforge is here because src/lib/ links termforge::lib into the exported
-# library. The link is PRIVATE, which is exactly the case the note above warns
-# about — a PRIVATE link into a static library still reaches the Targets file as
-# $<LINK_ONLY:termforge::lib>, because a consumer has to link it too. Without
-# this line a consumer's find_package(@PROJECT_NAME@) succeeds and then fails at
-# generate time with "the following imported targets are referenced, but are
-# missing: termforge::lib".
+# library. The link is PUBLIC — include/obscura/core/app.hpp derives from
+# termforge::App, so the usage requirement has to travel with the target — which
+# means it reaches the Targets file directly rather than wrapped in
+# $<LINK_ONLY:...>. Either way this line is required: without it a consumer's
+# find_package(@PROJECT_NAME@) succeeds and then fails at generate time with
+# "the following imported targets are referenced, but are missing:
+# termforge::lib".
 #
 # No version floor: cmake/deps/termforge.cmake pins the fetched copy by tag, and
 # a system copy is whatever the packager shipped. Add one here the day the

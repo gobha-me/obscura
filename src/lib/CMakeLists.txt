@@ -64,6 +64,66 @@ if (${PROJECT_NAME}_BUILD_LIB)
       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   )
 
+  # ── Baked art plates ──────────────────────────────────────────────────────
+  # assets/plates/*.png are committed, authored by tools/venice-bake/, and
+  # compiled in as constexpr byte arrays. Inside the BUILD_LIB guard on purpose:
+  # with the library off there is no translation unit to consume the header.
+  #
+  # The supported spelling of that configuration is BUILD_LIB=OFF paired with
+  # TESTS=OFF, which is what CI exercises. Unpaired, the root CMakeLists drops
+  # termforge from the dependency list while test/ still auto-discovers every
+  # test directory, so the build dies reaching <termforge/core/types.hpp> — now
+  # from include/obscura/render/art_plate.hpp, which reads like the library is
+  # broken rather than like two options were mixed. test/CMakeLists.txt says to
+  # pair them and says why.
+  include(${PROJECT_SOURCE_DIR}/cmake/embed_asset.cmake)
+
+  # The 6081-byte budget is derived, not picked, and it is a property of how a
+  # plate is TRANSMITTED rather than of embedding bytes — which is why it is set
+  # here and not inside obscura_embed_asset(). kitty base64s the payload (4/3)
+  # and adds a first-chunk header plus a few bytes per 4096-byte continuation:
+  #
+  #     image_transmit = ceil(P/3)*4 + 43 + 9*(ceil(b64/4096) - 1)
+  #
+  # The cap is 8192 bytes ON THE WIRE, and the wire carries the placement too:
+  # a plate at the origin costs another 30 bytes of cursor address and a=p. So
+  # the payload has to fit in 8162, not 8192, and the largest P that does is
+  # 6081 — NOT the 6105 that transmit alone allows. Getting that wrong makes
+  # this gate looser than the assertion it exists to front-run, which is the one
+  # way a gate like this can be actively harmful: it waves through the only
+  # sizes where it was ever going to be the thing that caught you.
+  #
+  # 30 is the minimum placement. A plate drawn away from the origin, or the
+  # sixteenth one with a two-digit image id, costs a few bytes more — so this is
+  # a floor and test/11art-plate, which measures the real total against the
+  # meter, remains the authority. It owns that figure; do not restate it here.
+  obscura_embed_asset(
+    ${PROJECT_SOURCE_DIR}/assets/plates/hold-d0.png
+    kHoldD0Png
+    ${PROJECT_BINARY_DIR}/generated/obscura/render/hold_d0.hpp
+    6081
+  )
+
+  # PRIVATE, and that is load-bearing twice over.
+  #
+  # A build-tree absolute path in a PUBLIC include directory makes
+  # install(TARGETS ... EXPORT ...) fail outright — the same trap the
+  # $<BUILD_INTERFACE:> above exists to avoid for the source tree. PRIVATE never
+  # reaches INTERFACE_INCLUDE_DIRECTORIES, so the export is untouched and the
+  # generated header needs no install rule.
+  #
+  # And it mechanically enforces "no public header names the generated one":
+  # include <obscura/render/hold_d0.hpp> from anything under include/obscura/
+  # and the first consumer to include that header fails to compile. Only
+  # src/render/art_plate.cpp may name it.
+  #
+  # PROJECT_BINARY_DIR, not CMAKE_BINARY_DIR: the latter is the top-level
+  # build's root, which belongs to someone else the moment we are consumed via
+  # add_subdirectory().
+  target_include_directories(${PROJECT_NAME}_lib
+    PRIVATE ${PROJECT_BINARY_DIR}/generated
+  )
+
   # The C++ standard is a property of this library's public headers, not of the
   # build that happens to be compiling it. cmake/toolchain/default.cmake sets
   # CMAKE_CXX_STANDARD for *our* builds, but a consumer uses their own toolchain
