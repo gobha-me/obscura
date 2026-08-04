@@ -44,7 +44,7 @@ else ()
     endif()
 
     if (NOT TERMFORGE_TAG)
-        set(TERMFORGE_TAG v0.6.3)
+        set(TERMFORGE_TAG v0.7.1)
     endif()
 
     # Match our own install option — see the long note above. Not a fixed OFF.

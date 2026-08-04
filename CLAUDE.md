@@ -8,6 +8,10 @@ file is the bug.
 > **v0.1.7**. termforge is now at **v0.6.3** and three of the bundle's claims are
 > stale — see "Upstream status" below before acting on any "termforge cannot do
 > X" statement in `docs/`.
+>
+> **Correction (2026-08-04).** The pin is now **v0.7.1**, and **T-H4 (the byte
+> meter) has landed**. The lesson of the 2026-07-31 block is that upstream moves
+> faster than this file: check a tag before you trust a version number in it.
 
 ## Baseline
 - **C++23**, **CMake >= 3.28**, GCC 13+ / **Clang 19+**. Both compilers, always.
@@ -15,7 +19,7 @@ file is the bug.
   cannot build against its libstdc++ pairing. CI installs a newer Clang for
   exactly this reason — do not "fix" that step by lowering the floor.
 - **Catch2 v3** for tests. **No package manager** — `FetchContent` only.
-- termforge consumed as `termforge::lib` at a pinned tag (**v0.6.3**), linked
+- termforge consumed as `termforge::lib` at a pinned tag (**v0.7.1**), linked
   **`PUBLIC`** — `include/obscura/core/app.hpp` derives from `termforge::App`,
   so the usage requirement has to travel with the target.
   Never vendored, never patched locally. Missing library features are filed
@@ -83,7 +87,7 @@ and under ASan/UBSan. A divergence is undefined behaviour — chase it immediate
 Terminal-protocol behaviour also needs empirical verification on a real emulator.
 You cannot see a terminal; ask the human to run the probe and report the bytes.
 
-## Upstream status (verified 2026-07-31 against termforge v0.6.3)
+## Upstream status (verified 2026-08-04 against termforge v0.7.1)
 
 You may open feature requests against termforge, and comment on open issues.
 **Search for the *facility*, not the ticket name** — several T-series items
@@ -108,7 +112,7 @@ already existed under different titles.
 | T-E3 | protocol loss mid-session → `ErrorEvent` | — | unfiled |
 | T-F1 | record/playback the event stream | #120 | open |
 | T-F2 | injectable clock | #119, #118 | open |
-| T-H4 | bytes-per-frame meter | #139 | filed — **do first** |
+| T-H4 | bytes-per-frame meter | #139 | ✅ **landed** — v0.6.8, `last_frame_bytes()` |
 | T-H5 | cell pixel geometry query + change event | #143 | filed |
 
 **T-E1/T-E2 landed.** `KeyAction{Press,Repeat,Release}`, `KeyEvent::action`,
@@ -116,6 +120,35 @@ already existed under different titles.
 push-on-setup / pop-on-teardown including the crash path. Tested in
 `test/04input` and `test/31keyboard`. The bundle says otherwise; the bundle is
 stale. This retires the largest technical risk to the commit gesture.
+
+**T-H4 landed** (#139, v0.6.8) — the ticket M0 flags "do this one first".
+`FrameBytes{cells, image_transmit, image_edit}` with `.total()`, read off the
+driver as `last_frame_bytes()` / `total_bytes()`. `App::driver()` is protected,
+so an application reads its own frame cost from inside its own `App` subclass;
+`test/10frame-bytes` is this repo's first consumer and shows the shape. Three
+things to know before measuring anything:
+
+- `test_run_frames` builds a **fresh driver on every call**, so a multi-frame
+  measurement must be **one call with a frame count**, never N calls of one
+  frame — otherwise the meter restarts while the sink keeps accumulating and a
+  working meter looks broken.
+- `cells` is the **remainder**, not a tallied quantity. The buckets sum to what
+  the sink received by construction, so nothing goes uncounted — but a new emit
+  path lands in `cells` until someone classifies it.
+- **The 2 KB idle ceiling is not assertable yet.** Measured through our own
+  `on_render`, an 80x24 full repaint costs **16,344 bytes** — the driver emits
+  an absolute cursor address before every cell. Closing that needs T-B2 (#142)
+  or run coalescing, neither of which is work this repo can do. Do not write the
+  2 KB assertion before then; see `docs/08-determinism.md`. **`test/10frame-bytes`
+  owns that number** — change it there, not in the four docs that point at it.
+
+**A pre-encoded image path also landed** (#163, v0.6.9): `EncodedImage` +
+`ImageFormat::Png`, plus `PlacementFit::Exact` (#137/#169). This retires the
+"a 240x160 plate costs 205 KB against an 8 KB budget" risk in `docs/` — a plate
+that size ships at ~5.3 KB. Ask `supports_image_format()` /
+`supports_placement_fit()` before committing to an art set: both answer without
+drawing, though only the format answer is stable — `supports_placement_fit()`
+changes with `set_placement_mode()`.
 
 Deliberately unfiled per the *no speculative tickets* rule, until their milestone
 approaches: T-D3, T-D5, T-E3, T-F3, T-G1/G2/G3, T-H6.

@@ -65,3 +65,29 @@ If nobody leans in, write down why and stop — the answer is worth a week eithe
 > T-H5 = #143, T-B1 = #114 (pre-existing, needs a fifth plane), T-B2 = #142,
 > T-C1 = #140, T-C2 = #116 (pre-existing), T-C4 = #141, T-D1 = #113
 > (pre-existing). Tracked here as issues #16–#26; the M0 gate is issue #26.
+>
+> **Correction (2026-08-04).** **T-H4 is done** — #139 landed in termforge
+> v0.6.8, and this repo now pins v0.7.1. Two consequences for the task list
+> above.
+>
+> The **"Bandwidth assertions"** task is blocked on T-B2 (#142), not on the
+> meter. A full repaint measures 16,344 bytes at 80x24 — the driver emits an
+> absolute cursor address before every cell the renderer hands it — so the 2 KB
+> line cannot be asserted yet. See `docs/08-determinism.md` for what to assert
+> instead; the number itself is owned by `test/10frame-bytes`.
+>
+> The **"one static art plate"** task got *easier*. termforge#163 (v0.6.9) added
+> a pre-encoded transmit path — `EncodedImage` with `ImageFormat::Png` — so a
+> plate ships its own compressed bytes rather than base64'd raw RGBA. Upstream
+> measured a 240x160 4-colour ordered-dithered PNG at **3,952 B asset → 5,272 B
+> base64**, against **204,800 B** for the same image as RGBA. Both figures
+> exclude the APC framing (a few dozen bytes per 4096-byte chunk), which is
+> additive rather than part of the ~1.34x base64 factor.
+>
+> Two cautions before treating that as this task's answer. The **8 KB target
+> above is already a wire quantity** ("measure the on-wire cost"), so it needs no
+> restating — an 8 KB wire budget allows roughly a 6 KB asset. And the measured
+> plate is upstream's *synthetic* test image, chosen deliberately to compress
+> badly, and it is opaque where this spec calls for 4 colours **+ transparent**.
+> It demonstrates the mechanism; it does not predict what authored art will cost.
+> Measure the real plate.

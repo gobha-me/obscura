@@ -56,7 +56,7 @@ You are authorised to file these against termforge yourself.
 | T-G1 | AudioSink interface + NullSink, stdlib-only | M1 | unfiled |
 | T-G2 | RtAudioSink as a separate optional target | M2 | unfiled |
 | T-G3 | Process-boundary sink as zero-dependency reference | M2 | unfiled |
-| T-H4 | Bytes-per-frame meter on the driver | M0 | #139 filed |
+| T-H4 | Bytes-per-frame meter on the driver | M0 | #139 ✅ landed v0.6.8 |
 | T-H5 | Expose cell pixel geometry and its change on resize | M0 | #143 filed |
 | T-H6 | Sanitisation boundary review for supplied names | M4 | unfiled |
 
