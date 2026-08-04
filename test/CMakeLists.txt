@@ -23,6 +23,12 @@ add_test(
 #
 # No fixtures: it reads the source tree and talks to nothing.
 #
+# Deliberately invoked with no arguments. The script's default target list is
+# both halves of the [SIM] tree — src/world/ and include/obscura/world/ — and
+# naming them here instead would fork the scope: the next directory added to
+# [SIM] would be covered when someone runs the script by hand and skipped by
+# ctest, which is the configuration in which nobody notices.
+#
 # ⚠ ctest runs this by path, with no interpreter, so the file must keep mode
 # 100755. check_artifacts.cmake rule B5 enforces that for every tracked *.sh.
 add_test(

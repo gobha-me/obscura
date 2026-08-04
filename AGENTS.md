@@ -25,11 +25,14 @@ what the item is.
 
 ## Invariants (these are the ones worth being careful about)
 
-- **`src/world/` is `[SIM]`.** No floating point, no wall clock, no ambient
-  entropy, no hashed-container iteration order. Enforced structurally by
-  `tools/lint/sim_purity.sh` (ctest: `sim-purity`), which explains what each ban
-  protects. If code in `world/` genuinely needs one of them, the answer is that
-  the code does not belong in `world/`.
+- **`src/world/` and `include/obscura/world/` are `[SIM]`.** No floating point,
+  no wall clock, no ambient entropy, no hashed-container iteration order.
+  Enforced structurally by `tools/lint/sim_purity.sh` (ctest: `sim-purity`),
+  which scans both trees and explains what each ban protects. The headers count
+  for the same reason the include allow-list exists: a banned construct declared
+  in a public header reaches every translation unit that includes it without
+  ever appearing in a `.cpp` under `src/world/`. If code in `world/` genuinely
+  needs one of them, the answer is that the code does not belong in `world/`.
 - **A run is `(seed, case index, intents)` and nothing else.** The world is a
   pure function of those three, which is what makes `src/replay/` an assertion
   rather than a feature. Do not add a fourth input — not a timestamp, not a
@@ -160,8 +163,11 @@ cannot be tested for directly — a desync reproduces perfectly until the day it
 does not — so `tools/lint/sim_purity.sh` (ctest: `sim-purity`) enforces it
 structurally instead, by refusing the constructs that break it. When you change
 that script, re-prove it the way the template proves its Class-B rules: drop a
-banned construct into `src/world/`, watch the test go red, revert. A lint that
-has rotted into one which matches nothing passes forever and says nothing.
+banned construct into `src/world/`, watch the test go red, revert — and do the
+same in `include/obscura/world/`, which the lint also scans and which fails
+differently (the header reaches every includer, so a green `src/world/` proves
+nothing about it). A lint that has rotted into one which matches nothing passes
+forever and says nothing.
 
 ## How to verify a change (do this before opening a PR)
 
@@ -243,8 +249,9 @@ and PRs note what was actually run to verify (per "How to verify" above).
   for exactly this reason; the fix anywhere else is to describe the token, not
   spell it.
 - `tools/lint/sim_purity.sh` is the other standalone check, and the more
-  important one. It is the only thing standing between `src/world/` and a
-  determinism bug nobody can reproduce.
+  important one. It is the only thing standing between the `[SIM]` tree
+  (`src/world/` and `include/obscura/world/`) and a determinism bug nobody can
+  reproduce.
 - Build dirs (`build*/`) are gitignored — don't commit them.
 - The dep pins in `cmake/deps/` are only audited when something breaks on a
   supported compiler; bump deliberately and say why in the commit.
