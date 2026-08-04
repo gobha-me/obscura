@@ -2,12 +2,20 @@
 #
 # sim-purity — the [SIM] discipline, enforced.
 #
-# src/world/ is the simulation. A run of OBSCURA has to be reconstructible from
-# a seed and a list of intents alone, or replay is a lie and the case solver is
-# checking a world the player never saw. That property cannot be tested for
-# directly — a determinism bug reproduces perfectly until the day it does not —
-# so it is enforced structurally instead: the simulation may not name the
-# constructs that break it.
+# src/world/ and include/obscura/world/ are the simulation: its sources and the
+# public headers they declare their types in. A run of OBSCURA has to be
+# reconstructible from a seed and a list of intents alone, or replay is a lie
+# and the case solver is checking a world the player never saw. That cannot be
+# tested directly — a determinism bug reproduces perfectly until the day it
+# does not — so it is enforced structurally instead: the simulation may not
+# name the constructs that break it.
+#
+# Both trees are scanned, and the header tree is not the lesser half. A `double`
+# member, an `unordered_map` field or a `#include <chrono>` in one of the [SIM]
+# public headers poisons every translation unit that includes it while no banned
+# token ever appears under src/world/ — the same indirect-violation gap the
+# include allow-list below closes for headers pulled in from elsewhere. A check
+# that read only the .cpp files would pass, and the corpus would diverge anyway.
 #
 # What is banned, and why each one:
 #
@@ -27,15 +35,15 @@
 #                     differently under a different standard library — on the
 #                     same machine, from the same seed.
 #
-# The seven token bans above only catch a violation spelled in src/world/
-# itself. A header included from here can reintroduce every one of them without
-# any banned token appearing in the simulation — so includes are checked the
-# other way round, against an allow-list: anything not named in `allowed_std`
-# or `allowed_prefixes` below is a violation, including a header that does not
-# exist yet. Default-deny is the point. A deny-list of <chrono> and <random>
-# would wave through <ratio>, <valarray>, <syncstream> and tomorrow's addition
-# to the standard library, and each of those has to be considered once, at the
-# moment someone reaches for it, rather than never.
+# The seven token bans above only catch a violation spelled in the scanned
+# trees themselves. A header included from here can reintroduce every one of
+# them without any banned token appearing in the simulation — so includes are
+# checked the other way round, against an allow-list: anything not named in
+# `allowed_std` or `allowed_prefixes` below is a violation, including a header
+# that does not exist yet. Default-deny is the point. A deny-list of <chrono>
+# and <random> would wave through <ratio>, <valarray>, <syncstream> and
+# tomorrow's addition to the standard library, and each of those has to be
+# considered once, at the moment someone reaches for it, rather than never.
 #
 # The allow-list also carries the one-way dependency rule (AGENTS.md): world/
 # depends on nothing else in this project, so obscura/world/ is permitted and
@@ -45,8 +53,10 @@
 # Registered as the ctest case `sim-purity` (see test/CMakeLists.txt), so a
 # violation fails the suite rather than waiting for review.
 #
-# Usage: tools/lint/sim_purity.sh [directory]
-#   Scans src/world/ by default. Exit 0 clean, exit 1 on any violation.
+# Usage: tools/lint/sim_purity.sh [directory ...]
+#   Scans src/world/ and include/obscura/world/ by default. Every directory
+#   given is scanned under the same rules — there is one [SIM] standard, not a
+#   stricter one for sources. Exit 0 clean, exit 1 on any violation.
 #
 # Keep the executable bit (mode 100755): ctest runs this by path with no
 # interpreter, and cmake/check_artifacts.cmake rule B5 enforces it.
@@ -55,12 +65,40 @@ set -euo pipefail
 
 here="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd -- "${here}/../.." && pwd)"
-target="${1:-${repo_root}/src/world}"
+# The [SIM] tree is two directories: the sources and the public headers they
+# define their types in. Both are scanned by default; an explicit argument list
+# replaces the pair rather than adding to it, so a caller can narrow to one.
+if [ "$#" -gt 0 ]; then
+  targets=("$@")
+else
+  targets=("${repo_root}/src/world" "${repo_root}/include/obscura/world")
+fi
 
-if [ ! -d "${target}" ]; then
-  echo "sim-purity: ${target} does not exist or is not a directory" >&2
+# Check every target before scanning any, so a typo in the second path is not
+# reported only after the first has been walked. A missing directory is a hard
+# error, not a skip: silently scanning nothing is how a lint rots into one that
+# passes forever.
+missing=""
+for target in "${targets[@]}"; do
+  if [ ! -d "${target}" ]; then
+    missing="${missing}  ${target}
+"
+  fi
+done
+if [ -n "${missing}" ]; then
+  echo "sim-purity: not a directory (or does not exist):" >&2
+  printf '%s' "${missing}" >&2
   exit 1
 fi
+
+# Repo-relative paths for the report — absolute ones are noise when every path
+# shares the same long prefix.
+target_label="$(
+  for target in "${targets[@]}"; do
+    printf '%s ' "${target#"${repo_root}/"}"
+  done
+)"
+target_label="${target_label% }"
 
 # Word boundaries on the identifier patterns, so "floating-point" in a comment
 # and a function called brand() are not violations. `rand(` and `time(` allow
@@ -151,7 +189,7 @@ for pattern in "${patterns[@]}"; do
   # -r over the directory rather than a glob, so a new subdirectory is covered
   # the moment it exists. || true because grep exits 1 on "no matches", which is
   # the outcome we want and `set -e` would treat as a failure.
-  hits="$(grep -rnE --include='*.cpp' --include='*.hpp' --include='*.h' -- "${pattern}" "${target}" || true)"
+  hits="$(grep -rnE --include='*.cpp' --include='*.hpp' --include='*.h' -- "${pattern}" "${targets[@]}" || true)"
   if [ -n "${hits}" ]; then
     found="${found}
 --- ${pattern}
@@ -164,7 +202,7 @@ done
 # as `header<TAB>location`, so the report can group by header without needing
 # associative arrays.
 include_lines="$(grep -rnE --include='*.cpp' --include='*.hpp' --include='*.h' \
-  -- '^[[:space:]]*#[[:space:]]*include' "${target}" || true)"
+  -- '^[[:space:]]*#[[:space:]]*include' "${targets[@]}" || true)"
 
 include_records=""
 if [ -n "${include_lines}" ]; then
@@ -187,16 +225,16 @@ if [ -n "${include_lines}" ]; then
 fi
 
 if [ -n "${found}" ]; then
-  echo "sim-purity: FAIL — ${target} names constructs the simulation may not use:" >&2
+  echo "sim-purity: FAIL — ${target_label} names constructs the simulation may not use:" >&2
   echo "${found}" >&2
   echo "" >&2
   echo "Each of these makes a run irreproducible from its seed. See the header of" >&2
-  echo "this script for why, and move the offending code out of src/world/ if it" >&2
-  echo "genuinely needs one." >&2
+  echo "this script for why, and move the offending code out of the [SIM] tree if" >&2
+  echo "it genuinely needs one." >&2
 fi
 
 if [ -n "${include_records}" ]; then
-  echo "sim-purity: FAIL — ${target} includes headers outside the [SIM] allow-list:" >&2
+  echo "sim-purity: FAIL — ${target_label} includes headers outside the [SIM] allow-list:" >&2
   while IFS= read -r header; do
     [ -n "${header}" ] || continue
     echo "" >&2
@@ -208,14 +246,14 @@ if [ -n "${include_records}" ]; then
   echo "The allow-list is default-deny: a header is permitted only if it is named" >&2
   echo "in allowed_std or allowed_prefixes at the top of this script. If the" >&2
   echo "simulation genuinely needs one of these, the usual answer is that the code" >&2
-  echo "belongs outside src/world/ — extending the list is a determinism decision," >&2
-  echo "not a formality." >&2
+  echo "belongs outside the [SIM] tree — extending the list is a determinism" >&2
+  echo "decision, not a formality." >&2
 fi
 
 if [ "${status}" -ne 0 ]; then
   exit 1
 fi
 
-file_count="$(find "${target}" -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \) | wc -l)"
-echo "sim-purity: CLEAN — ${file_count} file(s) under ${target}"
+file_count="$(find "${targets[@]}" -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \) | wc -l)"
+echo "sim-purity: CLEAN — ${file_count} file(s) under ${target_label}"
 exit 0

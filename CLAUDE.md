@@ -56,17 +56,22 @@ file is the bug.
 ## Layout
 ```
 include/obscura/   public headers        src/core/      App subclass, session FSM, ledger
-src/world/  [SIM]  hull, actors,         src/render/    bands, plates, dissolve, log view
-                   incident, evidence,   src/input/     key map, commit gesture FSM
-                   redaction, solver     src/audio/     sink iface, NullSink, RtAudioSink
-cases/             authored cases as     src/replay/    recorder, player, state hashing
-                   C++ constexpr data    test/corpus/   golden *.replay fixtures
+   world/   [SIM]  their public headers  src/render/    bands, plates, dissolve, log view
+src/world/  [SIM]  hull, actors,         src/input/     key map, commit gesture FSM
+                   incident, evidence,   src/audio/     sink iface, NullSink, RtAudioSink
+                   redaction, solver     src/replay/    recorder, player, state hashing
+cases/             authored cases as     test/corpus/   golden *.replay fixtures
+                   C++ constexpr data
 tools/lint/        sim_purity.sh         tools/         venice-bake, replay-verify
 ```
-`[SIM]` is the determinism firewall. `tools/lint/sim_purity.sh` runs as a CTest
-case over that source set and fails on `float`, `double`, `std::chrono`,
-`random_device`, `rand(`, `time(`, `unordered_`, or any include outside the
-allow-list. If the lint is in your way, the code is wrong, not the lint.
+`[SIM]` is the determinism firewall, and it is **two** directories: the sources
+in `src/world/` and the public headers they declare their types in,
+`include/obscura/world/`. `tools/lint/sim_purity.sh` runs as a CTest case over
+both and fails on `float`, `double`, `std::chrono`, `random_device`, `rand(`,
+`time(`, `unordered_`, or any include outside the allow-list. The header tree is
+not the lesser half — a `double` member or a `#include <chrono>` there poisons
+every translation unit that includes it while `src/world/` stays clean. If the
+lint is in your way, the code is wrong, not the lint.
 
 ## Testing philosophy (inherited from termforge)
 Test how it fails, not just the happy path. The failures that matter here:
