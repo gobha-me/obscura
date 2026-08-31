@@ -72,11 +72,14 @@ endif ()
 # "the following imported targets are referenced, but are missing:
 # termforge::lib".
 #
-# No version floor: cmake/deps/termforge.cmake pins the fetched copy by tag, and
-# a system copy is whatever the packager shipped. Add one here the day the
-# public header depends on a specific TermForge release.
+# The version is load-bearing. include/obscura/core/app.hpp publicly derives
+# from termforge::App, and TermForge uses SameMinorVersion compatibility while
+# it is pre-1.0. Accepting an older package here can therefore compile the
+# consumer's view of that class against a different layout from the one in the
+# installed obscura archive. cmake/deps/termforge.cmake defines the same floor
+# for the build-side find_package call and the FetchContent fallback.
 include(CMakeFindDependencyMacro)
-find_dependency(termforge)
+find_dependency(termforge @TERMFORGE_REQUIRED_VERSION@)
 
 include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
 

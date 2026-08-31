@@ -180,9 +180,11 @@ this one.
 
 You inherit the include directory, C++23, *and* TermForge as usage requirements
 of the target; a consumer sets none of them. The TermForge half is why
-`cmake/project-config.cmake.in` carries `find_dependency(termforge)` — a
-consumer of an installed OBSCURA needs TermForge findable, and `find_package`
-says so up front rather than failing at generate time.
+`cmake/project-config.cmake.in` carries a versioned
+`find_dependency(termforge)` — a consumer of an installed OBSCURA needs the
+same compatible pre-1.0 TermForge minor line that its public `App` base was
+built against, and `find_package` says so up front rather than failing later or
+mixing class layouts.
 
 **Install it**
 

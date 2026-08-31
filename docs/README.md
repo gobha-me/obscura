@@ -155,3 +155,28 @@ mention in `docs/` is a pointer to it.
 Separately, #163 (v0.6.9) added a pre-encoded PNG transmit path, which retires
 the "a 240x160 plate costs 205 KB" risk: a plate of that size ships at ~5.3 KB.
 See `01-M0-render-spike.md` for the corrected plate budget.
+
+---
+
+# Corrections (2026-08-31)
+
+The fetched pin and installed-package floor are now **termforge v0.57.20**. This
+is not a speculative refresh: it activates the M0 facilities that landed after
+v0.7.1 — named image layers, persistent image ownership/damage, resident block
+edits, exact animation-frame gaps and explicit image invalidation.
+
+The package floor is as important as the fetched tag. `obscura::core::App`
+publicly derives from `termforge::App`; allowing an installed consumer to pair
+the archive built against v0.57 with pre-1.0 headers from another minor line
+would make its view of that base class untrustworthy. Both build-time
+`find_package` and exported `find_dependency` therefore ask for v0.57.20.
+
+Two wire oracles moved, both deliberately. Cursor-aware sequential output makes
+an 80x24 first paint nearly fit the 2 KiB idle ceiling, while an unchanged idle
+frame remains exactly zero and is now explicitly asserted against that ceiling.
+Correlated Kitty replies add four framing bytes to a multi-chunk image transfer;
+the one-chunk committed plate remains unchanged and inside its budget.
+
+The dependency activation retires OBSCURA #18, #19, #22 and #24. It does not
+implement #23's dissolve, settle #57/#58's art-layout decisions, or close #17:
+the upstream geometry issue was closed after only partial delivery.

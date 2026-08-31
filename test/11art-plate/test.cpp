@@ -1,7 +1,7 @@
 // The baked art plate, and what it costs to put on the wire (issue #21).
 //
 // This file OWNS the plate's measured transmit cost, the way test/10frame-bytes
-// owns the 16,344-byte full repaint. The docs point here; they do not restate
+// owns the full-repaint measurement. The docs point here; they do not restate
 // the number, because a figure copied into four documents is a figure that will
 // disagree with itself.
 //
@@ -32,10 +32,10 @@
 // lifetime — but it does not and cannot redirect those bytes.
 //
 // The other thing this suite cannot answer is whether a real terminal ACCEPTS
-// a colour-type-3 payload. termforge transmits with q=2, so a terminal that
-// refuses one says so on a channel nobody reads: draw_image returns success and
-// the plate renders blank (termforge#165, open). If that happens, suspect the
-// payload before the placement.
+// a colour-type-3 payload. Current TermForge correlates image replies and can
+// roll refused work back, but only a real emulator can prove that this exact
+// indexed payload is accepted. If a plate renders blank, suspect the payload
+// before the placement.
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -71,15 +71,15 @@ using termforge::Rect;
 //
 //   payload -> base64            4/3, rounded up to a whole quantum
 //   first chunk   "\033_Ga=t,t=d,f=100,i=1,s=240,v=160,m=0,q=2;" + "\033\\"
-//   continuation  "\033_Gm=1;"                                   + "\033\\"
+//   continuation  "\033_Gm=0,q=0;"                               + "\033\\"
 //
 // The framing is ADDITIVE and sits outside the 4/3 factor — a distinction worth
-// keeping, because conflating the two is how the plate's cost has been misquoted
-// in both directions. `image_transmit` reports base64 PLUS framing: the driver
-// tallies the whole byte range it appends around transmit(), not just the
-// payload it encoded.
+// keeping, because conflating the two is how the plate's cost has been
+// misquoted in both directions. `image_transmit` reports base64 PLUS framing:
+// the driver tallies the whole byte range it appends around transmit(), not
+// just the payload it encoded.
 constexpr std::size_t kChunkSize = 4096;  // KittyDriver::transmit
-constexpr std::uint64_t kContinuationFraming = 9;
+constexpr std::uint64_t kContinuationFraming = 13;
 
 // The first chunk's header is digit-dependent — image id, s= and v= all grow
 // with their values — so it is counted from the literal rather than pinned to a
@@ -453,7 +453,10 @@ TEST_CASE("plate: the oracle holds across the chunk boundary", "[plate][bytes]")
   drv.flush();
 
   // Two chunks: the sanity check that this payload actually crosses the
-  // boundary, so the section cannot quietly stop testing what it names.
+  // boundary, so the section cannot quietly stop testing what it names. The
+  // final continuation requests the one correlated reply for the whole image;
+  // dropping q=0 here makes the oracle four bytes short and loses the refusal
+  // signal the driver now relies on.
   const std::uint64_t b64 = (kPayload + 2) / 3 * 4;
   REQUIRE(b64 > kChunkSize);
   REQUIRE(b64 < 2 * kChunkSize);
