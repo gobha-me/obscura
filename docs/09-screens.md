@@ -51,10 +51,17 @@ renderer, deliberately.
    ▓▒░░▒▓░▒░▓▒▒░░▓▒░▒▓░▒    │▒▒▒▒▒▒▒◆▒▒▒▒▒▒▒▒▒▒▒▒│    ║▒░░▒▒▓▓▒░░▒▓▒░▒▒▓▓▒░║
    ░▒▓░▒░▓▒░░▒▓▒░▒▓░░▒▒▓    │▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒│    ║▓▓▒▒░░░▒▒▓▓▓▒▒░░▒▒▓▓║
    ▒▓░▒░▓▒░▒▒▓░░▒▓▒░▓░▒▒    └────────────────────┘    ╚════════════════════╝
-   glyph band only           glyph + tint bands        plate band, glyphs cleared
-   no image placement        ▒ = damage tint in the     frame is part of the art,
-   fragments almost legible  cell background, not text  not text
+   glyph band only           glyph + tint bands        hull frame + plate interior
+   no image placement        ▒ = damage tint in the     glyph noise cleared; room
+   fragments almost legible  cell background, not text  label remains glyph text
 ```
+
+The resolved frame is `Layer::hull`, not plate pixels. The 240×160 canonical
+interior plate is placed with `PlacementFit::Stretch` into the fixed 20×7-cell
+interior; kitty enlarges or shrinks it with the terminal's cell geometry. The
+room label remains in `Layer::glyph` after the corrupt substrate clears, so one
+archetype×damage plate can serve every room of that archetype. Display pixel
+geometry changes presentation only and is never simulation or replay input.
 
 ## Console bezel — rows 33–39
 ```

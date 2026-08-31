@@ -65,12 +65,30 @@ lower bands each carry one factor instead, so the asset count stays additive:
 
 A bloodied hallway is a hallway plate **plus** a decal, never a second plate.
 
-**Composition happens once, at load, into a single resident image per
-compartment.** That rule is load-bearing: the dissolve then edits one resident
-image with dirty rects exactly as specified, T-C1 needs no change, and the
-bandwidth budget holds. Compositing at dissolve time — three images animating in
-lockstep — would triple the wire cost of the signature moment and is explicitly
-not the design.
+## Fixed cells, scaled source pixels
+
+A compartment is always 22 × 9 cells. `Layer::hull` owns its one-cell frame,
+leaving a fixed 20 × 7-cell destination for interior art. A plate is a
+canonical 240 × 160 source image, placed with `PlacementFit::Stretch`; kitty
+scales it to that destination using the terminal's current cell geometry. The
+source pixel extent is therefore neither a second layout grid nor a new input
+to the run.
+
+The room label remains text in `Layer::glyph` when the compartment resolves.
+Only the corrupt glyph substrate clears. Labels are never baked into plates,
+so the plate matrix remains archetype × damage rather than multiplying by room
+identity. High-DPI interpolation is presentation quality to judge at the M0
+real-terminal gate, while the canonical source keeps wire and dirty-edit costs
+independent of monitor resolution.
+
+**Packing happens once, at load, into a single resident backing image per
+compartment.** Hull, plate and overlay occupy non-overlapping source regions in
+that image and are placed from crops at their respective semantic layers. This
+means one transmit and one image ID with several cheap placements; it does not
+flatten the three bands onto one z-plane. The dissolve edits the plate region
+of that one resident image with dirty rects, so T-C1 needs no change and the
+bandwidth budget holds. Uploading and animating three independent images would
+triple the wire cost of the signature moment and is explicitly not the design.
 
 ## Determinism additions
 - Tile IDs are **manifest-declared integers covered by the pack hash**, never

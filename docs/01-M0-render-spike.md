@@ -119,10 +119,12 @@ If nobody leans in, write down why and stop — the answer is worth a week eithe
 >   address and `a=p` are paid — which is why the configure-time gate in
 >   `src/lib/CMakeLists.txt` is tighter than transmit-only arithmetic suggests.
 >
-> Still open and still worth knowing: **240x160 px does not map onto the 22x9
-> compartment box** of `docs/10-tile-grammar.md`, and no document reconciles
-> them. The test derives its rect from `image_cell_extent()` so it bakes in
-> neither number, and the conflict is filed rather than silently resolved.
+> **Correction (2026-08-31, plate layout).** Issues #57/#58 reconcile the two
+> extents without making terminal pixels part of the layout. A compartment
+> remains 22x9 cells; its hull-owned one-cell frame leaves a 20x7 interior. The
+> canonical 240x160 interior plate uses `PlacementFit::Stretch` into that rect,
+> and the room label remains glyph text after the noise clears. The plate asset
+> therefore stays archetype x damage and needs no re-bake.
 >
 > **Correction (2026-08-31).** This repo now requires termforge v0.57.20. The
 > upstream facilities behind T-B1, T-B2, T-C1, T-C2, T-C4 and T-D1 are present:
@@ -134,7 +136,8 @@ If nobody leans in, write down why and stop — the answer is worth a week eithe
 > The byte oracle moved with the dependency. Cursor-aware sequential writes
 > make an 80x24 first paint nearly fit the idle ceiling; an unchanged frame is
 > still exactly zero. Correlated image replies add four bytes to a multi-chunk
-> continuation, so the configure-time maximum plate payload is now 6,078 bytes.
+> continuation, and the scaled below-text placement adds `c=20,r=7,z=-1`, so
+> the configure-time maximum plate payload is now 6,069 bytes.
 > `test/10frame-bytes` and `test/11art-plate` remain the owners of the measured
-> figures. The real committed plate is one chunk and its measured cost did not
-> change.
+> figures. The real committed plate is still one chunk and its transmit cost is
+> unchanged; the complete placement cost now includes the scale and layer keys.

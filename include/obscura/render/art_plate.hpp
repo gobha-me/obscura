@@ -16,9 +16,11 @@
 // The accessors hand back a termforge::EncodedImage complete — payload and
 // declared extent together, never separately. EncodedImage's own header is
 // blunt about why: the library never parses a PNG, so the extent it is told is
-// the extent it enforces PlacementFit::Exact against and ships as s=/v=.
-// Under-declare it and kitty paints outside the rect that was approved. An API
-// that returns the pair makes that mistake unspellable at a call site.
+// the source extent it ships as s=/v=. The compartment renderer deliberately
+// scales that source into a fixed cell rect, but the terminal still needs the
+// source dimensions to interpret the payload correctly. An API that returns
+// the payload and extent together makes a stale declaration unspellable at a
+// call site.
 //
 // One caveat on lifetime, because it inverts the usual contract: EncodedImage's
 // `bytes` is documented as borrowed and valid only for the call it is passed
