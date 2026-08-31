@@ -60,6 +60,25 @@ You are authorised to file these against termforge yourself.
 | T-H5 | Expose cell pixel geometry and its change on resize | M0 | #143 filed |
 | T-H6 | Sanitisation boundary review for supplied names | M4 | unfiled |
 
+## Activation update (2026-08-31)
+
+OBSCURA now requires and fetches termforge v0.57.20. The M0 facilities behind
+the downstream wrapper issues are present in that pin:
+
+| Ticket | Upstream result |
+|---|---|
+| T-B1 | #114 landed `ImageLayer`, with image regimes above text, below text and below cell backgrounds. |
+| T-B2 | #142 closed OBE after persistent pixel content became independent from cell damage. |
+| T-C1 | #140 landed resident sub-rectangle edits through `edit_pinned()`. |
+| T-C2 | #116 landed `AnimationFrame` with exact per-frame gaps, including zero. |
+| T-C4 | #141 closed OBE: compose into one owned image/surface, then submit one persistent payload. |
+| T-D1 | #113 landed explicit invalidation, stale-handle refusal and lifecycle coverage. |
+
+This retires OBSCURA #18, #19, #22 and #24 as dependency blockers. T-H5 is the
+exception: termforge #143 is closed, but the driver-neutral query/change-event
+contract in OBSCURA #17 was only partly delivered, so the downstream issue stays
+open rather than inheriting an incorrect upstream state.
+
 ## Rules that get a ticket closed
 - Never propose a third-party dependency inside termforge's shipped library. It
   is **stdlib-only at runtime**. That is why T-G1 (interface) is in the library

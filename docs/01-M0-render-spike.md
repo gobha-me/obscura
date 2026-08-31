@@ -123,3 +123,18 @@ If nobody leans in, write down why and stop — the answer is worth a week eithe
 > compartment box** of `docs/10-tile-grammar.md`, and no document reconciles
 > them. The test derives its rect from `image_cell_extent()` so it bakes in
 > neither number, and the conflict is filed rather than silently resolved.
+>
+> **Correction (2026-08-31).** This repo now requires termforge v0.57.20. The
+> upstream facilities behind T-B1, T-B2, T-C1, T-C2, T-C4 and T-D1 are present:
+> named image regimes, persistent pixel damage separate from cell damage,
+> `edit_pinned()`, exact per-frame gaps (including zero), compose-then-submit as
+> one persistent surface, and explicit lifecycle invalidation. That retires
+> OBSCURA #18, #19, #22 and #24 as dependency blockers.
+>
+> The byte oracle moved with the dependency. Cursor-aware sequential writes
+> make an 80x24 first paint nearly fit the idle ceiling; an unchanged frame is
+> still exactly zero. Correlated image replies add four bytes to a multi-chunk
+> continuation, so the configure-time maximum plate payload is now 6,078 bytes.
+> `test/10frame-bytes` and `test/11art-plate` remain the owners of the measured
+> figures. The real committed plate is one chunk and its measured cost did not
+> change.

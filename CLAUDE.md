@@ -12,6 +12,10 @@ file is the bug.
 > **Correction (2026-08-04).** The pin is now **v0.7.1**, and **T-H4 (the byte
 > meter) has landed**. The lesson of the 2026-07-31 block is that upstream moves
 > faster than this file: check a tag before you trust a version number in it.
+>
+> **Correction (2026-08-31).** The pin and installed-package floor are now
+> **v0.57.20**. The M0 image primitives have landed; the live table below is the
+> authority for which downstream trackers that retires.
 
 ## Baseline
 - **C++23**, **CMake >= 3.28**, GCC 13+ / **Clang 19+**. Both compilers, always.
@@ -19,7 +23,7 @@ file is the bug.
   cannot build against its libstdc++ pairing. CI installs a newer Clang for
   exactly this reason — do not "fix" that step by lowering the floor.
 - **Catch2 v3** for tests. **No package manager** — `FetchContent` only.
-- termforge consumed as `termforge::lib` at a pinned tag (**v0.7.1**), linked
+- termforge consumed as `termforge::lib` at a pinned tag (**v0.57.20**), linked
   **`PUBLIC`** — `include/obscura/core/app.hpp` derives from `termforge::App`,
   so the usage requirement has to travel with the target.
   Never vendored, never patched locally. Missing library features are filed
@@ -99,7 +103,7 @@ and under ASan/UBSan. A divergence is undefined behaviour — chase it immediate
 Terminal-protocol behaviour also needs empirical verification on a real emulator.
 You cannot see a terminal; ask the human to run the probe and report the bytes.
 
-## Upstream status (verified 2026-08-04 against termforge v0.7.1)
+## Upstream status (verified 2026-08-31 against termforge v0.57.20)
 
 You may open feature requests against termforge, and comment on open issues.
 **Search for the *facility*, not the ticket name** — several T-series items
@@ -107,25 +111,25 @@ already existed under different titles.
 
 | T | Facility | termforge issue | State |
 |---|---|---|---|
-| T-A1 | capability floor / refuse to start | #91 | open |
+| T-A1 | capability floor / refuse to start | #91 | ✅ **landed** |
 | T-A2 | virtual setup/teardown hooks | #97 | ✅ **landed** — `on_start` / `on_stop` |
-| T-A3 | min grid size + pause-to-modal | #91 | floor half in #91; resize half raised as a comment |
+| T-A3 | min grid size + pause-to-modal | #91 | ✅ **landed** — live `AppRequirements` reevaluation |
 | T-A4 | image cell rows/cols occupied | #100 | ✅ **landed** — `image_cell_extent()` |
-| T-B1 | named layer API | #114 | open — **needs 5 planes, not the 4 proposed** |
-| T-B2 | per-layer damage tracking | #142 | filed |
-| T-C1 | rect block edits of a resident frame | #140 | filed |
-| T-C2 | per-frame gaps, zero-gap bases | #116 | open — commented |
-| T-C4 | compose N sources into one image | #141 | filed |
-| T-D1 | image lifecycle across screen transitions | #113 | open — commented |
-| T-D2 | quota accounting + eviction hooks | #112, #109 | open |
-| T-D4 | shared-memory transfer path | #111 | open (optional, M3) |
+| T-B1 | named layer API | #114 | ✅ **landed** — three image regimes around text/background |
+| T-B2 | per-layer damage tracking | #142 | ✅ closed OBE — persistent pixel state is independent of cell damage |
+| T-C1 | rect block edits of a resident frame | #140 | ✅ **landed** — `edit_pinned()` |
+| T-C2 | per-frame gaps, zero-gap bases | #116 | ✅ **landed** — `AnimationFrame` / `register_animation()` |
+| T-C4 | compose N sources into one image | #141 | ✅ closed OBE — compose one owned persistent surface before submission |
+| T-D1 | image lifecycle across screen transitions | #113 | ✅ **landed** — explicit invalidation and stale-handle refusal |
+| T-D2 | quota accounting + eviction hooks | #112, #109 | ✅ **landed** — residency accounting and pinned ownership |
+| T-D4 | shared-memory transfer path | #111 | ✅ **landed** (still optional for OBSCURA) |
 | T-E1 | negotiate keyboard protocol | #60 | ✅ **landed** |
 | T-E2 | press / repeat / release + modifiers | #60 | ✅ **landed** |
 | T-E3 | protocol loss mid-session → `ErrorEvent` | — | unfiled |
-| T-F1 | record/playback the event stream | #120 | open |
-| T-F2 | injectable clock | #119, #118 | open |
+| T-F1 | record/playback the event stream | #120 | ✅ **landed** |
+| T-F2 | injectable clock | #119, #118 | ✅ **landed** |
 | T-H4 | bytes-per-frame meter | #139 | ✅ **landed** — v0.6.8, `last_frame_bytes()` |
-| T-H5 | cell pixel geometry query + change event | #143 | filed |
+| T-H5 | cell pixel geometry query + change event | #143 | ⚠ upstream issue closed after partial work; OBSCURA #17 remains open |
 
 **T-E1/T-E2 landed.** `KeyAction{Press,Repeat,Release}`, `KeyEvent::action`,
 `KeyboardMode{Legacy,Disambiguate,Enhanced}`, `Capabilities::kitty_keyboard`,
@@ -147,12 +151,10 @@ things to know before measuring anything:
 - `cells` is the **remainder**, not a tallied quantity. The buckets sum to what
   the sink received by construction, so nothing goes uncounted — but a new emit
   path lands in `cells` until someone classifies it.
-- **The 2 KB idle ceiling is not assertable yet.** Measured through our own
-  `on_render`, an 80x24 full repaint costs **16,344 bytes** — the driver emits
-  an absolute cursor address before every cell. Closing that needs T-B2 (#142)
-  or run coalescing, neither of which is work this repo can do. Do not write the
-  2 KB assertion before then; see `docs/08-determinism.md`. **`test/10frame-bytes`
-  owns that number** — change it there, not in the four docs that point at it.
+- **The 2 KB idle ceiling is now asserted.** A repeated unchanged frame costs
+  exactly zero. Cursor-aware sequential writes also cut the 80x24 first paint
+  from 16,344 bytes to just over one ceiling; `test/10frame-bytes` owns the
+  current figure and its independent wire oracle. See `docs/08-determinism.md`.
 
 **A pre-encoded image path also landed** (#163, v0.6.9): `EncodedImage` +
 `ImageFormat::Png`, plus `PlacementFit::Exact` (#137/#169). This retires the
@@ -161,6 +163,15 @@ that size ships at ~5.3 KB. Ask `supports_image_format()` /
 `supports_placement_fit()` before committing to an art set: both answer without
 drawing, though only the format answer is stable — `supports_placement_fit()`
 changes with `set_placement_mode()`.
+
+**The M0 image foundation landed.** `ImageLayer` supplies the three image
+regimes separated by text and cell backgrounds; persistent pixel regions keep
+cell damage independent from image payload damage; `edit_pinned()` updates a
+resident sub-rectangle; and `AnimationFrame` carries an exact per-frame gap,
+including zero. TermForge closed T-C4 as obsolete because composing sources
+into one owned `Image`/`PixelSurface` before persistent submission already
+produces one resident id and one transmit. These are upstream facilities: the
+OBSCURA dissolve remains issue #23.
 
 Deliberately unfiled per the *no speculative tickets* rule, until their milestone
 approaches: T-D3, T-D5, T-E3, T-F3, T-G1/G2/G3, T-H6.

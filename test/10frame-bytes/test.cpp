@@ -5,8 +5,8 @@
 //
 // The meter is T-H4 (termforge#139), which landed upstream in v0.6.8 — the
 // ticket the M0 plan flags "do this one first, everything else is measured
-// against it". This file is its first consumer here, and the reason the pin
-// moved to v0.7.1.
+// against it". This file is its first consumer here. The v0.57.20 pin keeps the
+// meter and activates the rest of the M0 TermForge primitives.
 //
 // No terminal, per CLAUDE.md: "Driver-facing tests are offline against an
 // in-memory sink." test_run_frames() wires a Screen, a Renderer and a
@@ -45,11 +45,12 @@ constexpr int kRows = 24;
 // apart, so that equality is arithmetic, not behaviour. This function knows
 // nothing about either.
 //
-// TermForge's Renderer calls draw_text once per changed cell, and
-// FallbackDriver emits an absolute cursor address before each one:
-// "\033[{row};{col}H" plus the single space. That is 5 fixed bytes — ESC, '[',
-// ';', 'H', and the space — plus the decimal digits of the 1-based row and
-// column.
+// TermForge's Renderer still calls draw_text once per changed cell, but
+// FallbackDriver now remembers where the previous call left the cursor.
+// Therefore only the first cell in a row emits "\033[{row};1H"; the remaining
+// cells are adjacent and cost one space each. A row costs `cols` spaces plus 5
+// fixed cursor bytes (ESC, '[', ';', '1', 'H') and the decimal digits of its
+// 1-based row.
 //
 // It is deliberately coupled to that wire format. A change to it is not a
 // cosmetic upstream detail: it moves the cost of every frame OBSCURA will ever
@@ -61,12 +62,15 @@ constexpr auto digits(int n) -> std::uint64_t { return n < 10 ? 1 : (n < 100 ? 2
 constexpr auto full_repaint_bytes(int cols, int rows) -> std::uint64_t {
   std::uint64_t total = 0;
   for (int y = 1; y <= rows; ++y)
-    for (int x = 1; x <= cols; ++x) total += 5 + digits(y) + digits(x);
+    total += static_cast<std::uint64_t>(cols) + 5 + digits(y);
   return total;
 }
 
-constexpr std::uint64_t kFullRepaint = full_repaint_bytes(kCols, kRows);  // 16,344
-static_assert(kFullRepaint == 16344, "the 80x24 figure recorded in docs/08-determinism.md");
+constexpr std::uint64_t kFullRepaint =
+    full_repaint_bytes(kCols, kRows); // 2,079
+constexpr std::uint64_t kIdleCeiling =
+    2048; // docs/08-determinism.md, section 7.7
+static_assert(kFullRepaint == 2079, "the 80x24 wire-format oracle moved");
 
 // The meter lives on TerminalDriver, and App::driver() is protected — an
 // application reads its own frame cost from inside its own App subclass, which
@@ -296,32 +300,27 @@ TEST_CASE("app: a second identical frame costs nothing at all", "[app][bytes]") 
   app.run_offline(2, kCols, kRows);
 
   CHECK(app.last_frame().total() == 0);
+  CHECK(app.last_frame().total() <= kIdleCeiling);
   CHECK(app.cumulative().total() == kFullRepaint);  // frame 1 only
 }
 
-TEST_CASE("app: the full-repaint cost is nowhere near the idle budget",
+TEST_CASE("app: the full-repaint cost is now just above the idle budget",
           "[app][bytes]") {
-  // THE number, and this case owns it: 16,344 bytes for one 80x24 repaint.
+  // THE number, and this case owns it: 2,079 bytes for one 80x24 repaint.
   // The docs point here rather than restating it, so when it moves there is
   // one place to change and it goes red on its own.
   //
-  // It is NOT asserted against the 2 KB idle ceiling in docs/08-determinism.md,
-  // and that is deliberate. That ceiling assumes per-layer damage tracking
-  // (termforge#142, still open) and cheaper cell addressing. An assertion that
-  // no change in THIS repo can turn green is worse than no assertion — it is
-  // one people learn to skip. What this pins instead is the size of the gap,
-  // so that closing it is visible.
-  //
-  // The dominant term is cursor addressing, not content: 5 of the ~8.5 bytes
-  // per cell are the escape, and the 8.5 is an 80x24 average — it grows with
-  // the digit count, so a 120x40 grid is dearer per cell, not just per frame.
-  // That is why coalescing runs would beat damage tracking at this size.
+  // A first paint is not an idle frame, so it does not have to fit the 2 KiB
+  // idle ceiling. The comparison remains useful: v0.7.1 cost 16,344 bytes and
+  // sat eight ceilings away; cursor-aware sequential writes have reduced the
+  // gap to 31 bytes. The preceding case is the actual idle assertion and is
+  // deliberately stronger than the budget: an unchanged frame costs zero.
   FrameProbe app;
   app.run_offline(1, kCols, kRows);
 
-  constexpr std::uint64_t kIdleCeiling = 2048;  // docs/08-determinism.md, §7.7
-  CHECK(app.last_frame().total() == 16344);
-  CHECK(app.last_frame().total() > 7 * kIdleCeiling);
+  CHECK(app.last_frame().total() == kFullRepaint);
+  CHECK(app.last_frame().total() > kIdleCeiling);
+  CHECK(app.last_frame().total() - kIdleCeiling == 31);
 }
 
 // ── The smoke check, last ───────────────────────────────────────────────────

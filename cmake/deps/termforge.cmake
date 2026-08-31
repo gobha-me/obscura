@@ -1,7 +1,7 @@
 # TermForge — the terminal UI toolkit OBSCURA renders through.
 #
 # Follows the shape documented in cmake/deps/catch2.cmake (the annotated recipe):
-#   1. find_package(termforge QUIET)  — prefer a system/installed copy.
+#   1. find_package(termforge <version> QUIET) — prefer a compatible installed copy.
 #   2. On miss, FetchContent fallback with overridable, pinned coordinates.
 #   3. Decide the dependency's install rules by where it is linked.
 #
@@ -35,7 +35,15 @@
 # 3.28, well above the 3.13 floor where `set()` before `option()` starts being
 # honoured, so the value below actually reaches its option().
 
-find_package(termforge QUIET)
+# This is both the oldest package we may consume and the version our fallback
+# fetches.  Keep it available to cmake/project-config.cmake.in: our public App
+# header derives from termforge::App, so an installed obscura archive and the
+# TermForge headers its consumer sees must agree on this pre-1.0 ABI line.
+if (NOT TERMFORGE_REQUIRED_VERSION)
+    set(TERMFORGE_REQUIRED_VERSION 0.57.20)
+endif()
+
+find_package(termforge ${TERMFORGE_REQUIRED_VERSION} QUIET)
 
 if (termforge_FOUND)
 else ()
@@ -44,7 +52,7 @@ else ()
     endif()
 
     if (NOT TERMFORGE_TAG)
-        set(TERMFORGE_TAG v0.7.1)
+        set(TERMFORGE_TAG v${TERMFORGE_REQUIRED_VERSION})
     endif()
 
     # Match our own install option — see the long note above. Not a fixed OFF.

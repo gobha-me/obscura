@@ -91,6 +91,18 @@ fixture — bug reports arrive as playable artifacts.
 > One trap for whoever checks this: termforge's own status notes quote ~5.1 KB
 > for a 120x40 repaint, which looks like it contradicts 16,344 at 80x24. It does
 > not — that measurement is a diffed steady-state frame, not a first paint.
+>
+> **Correction (2026-08-31).** OBSCURA now requires termforge v0.57.20. The
+> earlier block remains the record of v0.7.1, but its stop rule is retired:
+> persistent image content now has damage state independent from the cell grid,
+> and the fallback driver keeps cursor position across adjacent cell writes.
+> `test/10frame-bytes` independently derives the new first-paint wire cost and
+> explicitly checks the actual idle frame against the 2 KiB ceiling. The idle
+> result is stronger than the budget: an unchanged second frame costs zero.
+>
+> This does not complete the Bandwidth gate. The dissolve and full-session
+> sustained assertions remain owned by #23 and M1 respectively; only the idle
+> leg is green today.
 
 ## Failure playbook
 A hash divergence between compilers or optimisation levels is almost never
