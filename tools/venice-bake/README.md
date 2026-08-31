@@ -30,6 +30,10 @@ first time a runner's zlib moved.
 darkest first. A 4x4 Bayer matrix dithers between adjacent inks, so four colours
 read as sixteen levels.
 
+That extent is the canonical source, not a second cell grid. The renderer uses
+kitty's stretch placement to map it into the fixed 20x7-cell compartment
+interior, keeping monitor pixels out of simulation and replay state.
+
 Two things in `bake.py` are load-bearing and easy to undo by accident:
 
 - **Bit depth 8, not 4.** Packing two indices per byte halves the raw scanlines

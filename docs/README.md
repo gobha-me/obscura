@@ -177,6 +177,16 @@ frame remains exactly zero and is now explicitly asserted against that ceiling.
 Correlated Kitty replies add four framing bytes to a multi-chunk image transfer;
 the one-chunk committed plate remains unchanged and inside its budget.
 
-The dependency activation retires OBSCURA #18, #19, #22 and #24. It does not
-implement #23's dissolve, settle #57/#58's art-layout decisions, or close #17:
-the upstream geometry issue was closed after only partial delivery.
+The dependency activation retires OBSCURA #18, #19, #22 and #24. At the time it
+landed it did not implement #23's dissolve, settle #57/#58's art-layout
+decisions, or close #17: the upstream geometry issue was closed after only
+partial delivery.
+
+## Plate layout resolution (2026-08-31)
+
+Issues #57/#58 keep each compartment at 22x9 cells and define the 240x160 plate
+as a canonical source stretched into its 20x7-cell interior. The frame belongs
+to the hull band; the semantic room label remains glyph text after resolution.
+The existing interior-only plate therefore needs no re-bake, and display pixel
+geometry remains presentation rather than run state. The actual dissolve and
+the real-emulator quality gate remain #23 and #20/#26 respectively.

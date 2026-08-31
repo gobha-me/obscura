@@ -10,10 +10,10 @@
 // The first is the ENVELOPE. termforge is a courier for a pre-encoded payload:
 // it does not decode a PNG, does not validate one, and has no opinion about
 // what is inside. That is the only reason a compressed wire format can exist in
-// a stdlib-only library at all — and it means the extent the driver enforces
-// PlacementFit::Exact against, and ships as s=/v=, is the extent it was TOLD.
-// Nothing upstream checks that claim against the payload. So this file parses
-// the PNG itself. It is the only place that ever will.
+// a stdlib-only library at all — and it means the source extent the driver
+// ships as s=/v= is the extent it was TOLD. Nothing upstream checks that claim
+// against the payload. So this file parses the PNG itself. It is the only place
+// that ever will.
 //
 // The second is the COST, asserted against an oracle derived from kitty's wire
 // format rather than read back off the meter. Checking the meter against the
@@ -57,9 +57,25 @@ using termforge::Extent;
 using termforge::FallbackDriver;
 using termforge::FrameBytes;
 using termforge::ImageFormat;
+using termforge::ImageLayer;
+using termforge::ImagePlacementOptions;
 using termforge::KittyDriver;
 using termforge::PlacementFit;
 using termforge::Rect;
+
+// Issues #57/#58: a compartment remains 22x9 cells, its hull-owned frame takes
+// one cell on every side, and this 240x160 source is intentionally scaled into
+// the 20x7 interior below glyph text. Monitor pixels are presentation, never a
+// fourth input to the run.
+constexpr Rect kPlateDestination{0, 0, 20, 7};
+constexpr ImagePlacementOptions kPlatePlacement{
+    .fit = PlacementFit::Stretch,
+    .layer = ImageLayer::below_text(),
+};
+
+auto draw_plate(KittyDriver &driver, const EncodedImage &plate) {
+  return driver.draw_image(kPlateDestination, plate, kPlatePlacement);
+}
 
 // ── the oracle ──────────────────────────────────────────────────────────────
 //
@@ -138,7 +154,7 @@ constexpr std::uint64_t kWireBudget = 8192;
 // what it reports, and look at the delta before committing it.
 constexpr std::size_t kPlateBytes = 756;         // assets/plates/hold-d0.png
 constexpr std::uint64_t kMeasuredTransmit = 1051;  // base64 + APC framing
-constexpr std::uint64_t kMeasuredEdit = 30;        // cursor address + a=p at 0,0
+constexpr std::uint64_t kMeasuredEdit = 44; // cursor + scaled z=-1 placement
 constexpr std::uint64_t kMeasuredTotal = kMeasuredTransmit + kMeasuredEdit;
 static_assert(kMeasuredTotal <= kWireBudget,
               "the plate is over issue #21's on-wire budget");
@@ -380,16 +396,8 @@ TEST_CASE("plate: the wire cost is what base64 and the APC framing predict",
   auto& sink = p.sink;
 
   REQUIRE(drv.supports_image_format(ImageFormat::Png));
-  REQUIRE(drv.supports_placement_fit(PlacementFit::Exact));
-
-  // No magic constants: the destination rect is derived from the image's own
-  // extent and the driver's cell geometry. 240x160 does not divide evenly into
-  // the 22x9 compartment box docs/10-tile-grammar.md specifies, and nothing in
-  // docs/ reconciles those two numbers — so this test declines to bake either
-  // of them in. (T-H5, termforge#143, is the ticket that would let the real
-  // geometry be queried instead of assumed.)
-  const Extent cells = drv.image_cell_extent(plate.pixels);
-  REQUIRE(drv.draw_image(Rect{0, 0, cells.w, cells.h}, plate, PlacementFit::Exact));
+  REQUIRE(drv.supports_image_placement(kPlatePlacement));
+  REQUIRE(draw_plate(drv, plate));
 
   drv.flush();
   const FrameBytes f = drv.last_frame_bytes();
@@ -402,6 +410,7 @@ TEST_CASE("plate: the wire cost is what base64 and the APC framing predict",
   // before the id.
   constexpr unsigned kFirstImageId = 1;
   CHECK(sink.find("i=" + std::to_string(kFirstImageId) + ",") != std::string::npos);
+  CHECK(sink.find(",c=20,r=7,z=-1,C=1,q=2") != std::string::npos);
 
   const std::uint64_t predicted = expected_transmit(plate.bytes.size(), plate.pixels.w,
                                                     plate.pixels.h, kFirstImageId);
@@ -423,7 +432,7 @@ TEST_CASE("plate: the wire cost is what base64 and the APC framing predict",
 
 TEST_CASE("plate: the oracle holds across the chunk boundary", "[plate][bytes]") {
   // The committed plate is one chunk, so the continuation term in
-  // expected_transmit() — and the 9 bytes it multiplies — is dead code as far
+  // expected_transmit() — and the 13 bytes it multiplies — is dead code as far
   // as the plate itself is concerned. That term is not idle: the configure-time
   // budget in src/lib/CMakeLists.txt derives its byte cap from the same
   // arithmetic. An unexercised constant underneath a gate that rejects real
@@ -448,8 +457,7 @@ TEST_CASE("plate: the oracle holds across the chunk boundary", "[plate][bytes]")
   const EncodedImage synthetic{ImageFormat::Png, std::span<const std::byte>{filler},
                                Extent{kW, kH}};
 
-  const Extent cells = drv.image_cell_extent(synthetic.pixels);
-  REQUIRE(drv.draw_image(Rect{0, 0, cells.w, cells.h}, synthetic, PlacementFit::Exact));
+  REQUIRE(draw_plate(drv, synthetic));
   drv.flush();
 
   // Two chunks: the sanity check that this payload actually crosses the
@@ -473,10 +481,7 @@ TEST_CASE("plate: transmitting it twice costs once", "[plate][bytes]") {
   Probe p;
   auto& drv = p.drv;
 
-  const Extent cells = drv.image_cell_extent(plate.pixels);
-  const Rect dest{0, 0, cells.w, cells.h};
-
-  REQUIRE(drv.draw_image(dest, plate, PlacementFit::Exact));
+  REQUIRE(draw_plate(drv, plate));
   drv.flush();
   const std::uint64_t first = drv.last_frame_bytes().image_transmit;
   REQUIRE(first > 0);
@@ -484,7 +489,7 @@ TEST_CASE("plate: transmitting it twice costs once", "[plate][bytes]") {
   // Redraw before flushing. flush() garbage-collects any region NOT drawn in
   // the frame it is ending, so flushing twice without redrawing would emit a
   // delete and read as a regression in a driver behaving perfectly.
-  REQUIRE(drv.draw_image(dest, plate, PlacementFit::Exact));
+  REQUIRE(draw_plate(drv, plate));
   drv.flush();
   CHECK(drv.last_frame_bytes().image_transmit == 0);
 }
