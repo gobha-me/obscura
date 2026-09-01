@@ -25,6 +25,25 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  format:
+    name: Clang Format 20
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Clang Format 20
+        env:
+          CLANG_VERSION: "20"
+        run: |
+          wget -qO /tmp/llvm.sh https://apt.llvm.org/llvm.sh
+          chmod +x /tmp/llvm.sh
+          sudo /tmp/llvm.sh "$CLANG_VERSION"
+          sudo apt-get install -y "clang-format-$CLANG_VERSION"
+
+      - name: Check first-party C++ formatting
+        run: tools/format.sh --check
+
   clang-tidy:
     name: Clang Tidy 20
     runs-on: ubuntu-24.04
