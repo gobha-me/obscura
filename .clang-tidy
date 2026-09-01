@@ -1,0 +1,35 @@
+---
+# Keep the CLI gate broad. Narrow suppressions belong at the finding, with a
+# check name and justification, unless a rule conflicts with repository-wide
+# policy. In particular, readability-function-cognitive-complexity remains on.
+# Platform and house-style families for other ecosystems (Android, Fuchsia,
+# Google, HICPP, LLVM, Objective-C, OpenMP, Zircon) are not OBSCURA policy; the
+# cross-project semantic families below are.
+InheritParentConfig: false
+# Explicit {} member initializers document deterministic/default state across
+# the simulation boundary; removing them would trade that signal for brevity.
+# Public fields are the contract for OBSCURA's plain state/projection records;
+# wrapping those aggregates in accessors would obscure rather than encapsulate.
+Checks: >
+  -*,
+  clang-analyzer-*,
+  bugprone-*,
+  cert-*,
+  concurrency-*,
+  cppcoreguidelines-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  -bugprone-easily-swappable-parameters,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -readability-identifier-length,
+  -readability-magic-numbers,
+  -misc-non-private-member-variables-in-classes,
+  -readability-redundant-member-init
+WarningsAsErrors: '*'
+HeaderFilterRegex: '^.*/(include/obscura|cases)/'
+ExcludeHeaderFilterRegex: '^.*/(build[^/]*/|_deps/)'
+SystemHeaders: false
+FormatStyle: file
