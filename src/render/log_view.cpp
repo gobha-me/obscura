@@ -3,6 +3,12 @@
 
 #include <obscura/render/log_view.hpp>
 
+#include <cstddef>
+#include <string>
+#include <vector>
+
+#include <obscura/core/ledger.hpp>
+
 namespace obscura::render {
 
 auto format_entry(const core::Entry& entry) -> std::string {

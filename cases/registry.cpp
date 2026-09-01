@@ -9,6 +9,10 @@
 #include <obscura/cases/case_data.hpp>
 
 #include <array>
+#include <span>
+
+#include <obscura/world/actors.hpp>
+#include <obscura/world/hull.hpp>
 
 #include "derelict_alpha.hpp"
 

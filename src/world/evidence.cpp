@@ -4,6 +4,10 @@
 
 #include <obscura/world/evidence.hpp>
 
+#include <obscura/world/actors.hpp>
+#include <obscura/world/hull.hpp>
+#include <obscura/world/incident.hpp>
+
 namespace obscura::world {
 
 auto derive(const Hull& hull, const Roster& roster, const Incident& incident) -> EvidenceSet {
@@ -18,11 +22,11 @@ auto derive(const Hull& hull, const Roster& roster, const Incident& incident) ->
   // the solver has something to be uniquely-solvable *about* before the real
   // derivations land.
   items.push_back(Evidence{
-      EvidenceKind::Trace,
-      kNoActor,
-      incident.scene,
-      incident.when,
-      "disturbance",
+      .kind = EvidenceKind::Trace,
+      .subject = kNoActor,
+      .where = incident.scene,
+      .when = incident.when,
+      .label = "disturbance",
   });
 
   // Iterated in roster order, not by any associative container's ordering — the
@@ -32,11 +36,11 @@ auto derive(const Hull& hull, const Roster& roster, const Incident& incident) ->
       continue;
     }
     items.push_back(Evidence{
-        EvidenceKind::Absence,
-        actor.id,
-        incident.scene,
-        incident.when,
-        "elsewhere",
+        .kind = EvidenceKind::Absence,
+        .subject = actor.id,
+        .where = incident.scene,
+        .when = incident.when,
+        .label = "elsewhere",
     });
   }
 

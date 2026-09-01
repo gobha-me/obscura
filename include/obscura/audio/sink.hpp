@@ -34,6 +34,8 @@ class Sink {
 
   Sink(const Sink&)                    = delete;
   auto operator=(const Sink&) -> Sink& = delete;
+  Sink(Sink&&)                         = delete;
+  auto operator=(Sink&&) -> Sink&      = delete;
 
   // Non-blocking by contract. A sink that needs to do work owns its own thread;
   // this is called from the render loop, where a stall is a dropped frame.

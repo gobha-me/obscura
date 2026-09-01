@@ -5,6 +5,12 @@
 #include <obscura/world/redaction.hpp>
 
 #include <algorithm>
+#include <cstddef>
+#include <utility>
+
+#include <obscura/world/actors.hpp>
+#include <obscura/world/evidence.hpp>
+#include <obscura/world/hull.hpp>
 
 namespace obscura::world {
 

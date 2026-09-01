@@ -3,6 +3,8 @@
 
 #include <obscura/input/commit_gesture.hpp>
 
+#include <cstddef>
+
 namespace obscura::input {
 
 auto CommitGesture::arm() -> bool {

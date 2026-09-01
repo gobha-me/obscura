@@ -3,6 +3,12 @@
 
 #include <obscura/replay/recorder.hpp>
 
+#include <cstddef>
+
+#include <obscura/input/key_map.hpp>
+#include <obscura/replay/state_hash.hpp>
+#include <obscura/world/incident.hpp>
+
 namespace obscura::replay {
 
 Recorder::Recorder(std::size_t case_index, world::Seed seed) {
@@ -18,7 +24,7 @@ auto Recorder::record(input::Intent intent, std::size_t subject) -> void {
   if (m_sealed) {
     return;
   }
-  m_recording.steps.push_back(Step{intent, subject});
+  m_recording.steps.push_back(Step{.intent = intent, .subject = subject});
 }
 
 auto Recorder::seal(Digest digest) -> void {

@@ -3,6 +3,8 @@
 
 #include <obscura/core/ledger.hpp>
 
+#include <cstddef>
+#include <cstdint>
 #include <utility>
 
 namespace obscura::core {
@@ -22,7 +24,7 @@ auto Ledger::spend(std::size_t subject, std::uint32_t cost) -> bool {
   }
 
   m_remaining -= cost;
-  append(Entry{EntryKind::Spend, subject, {}});
+  append(Entry{.kind = EntryKind::Spend, .subject = subject, .text = {}});
   return true;
 }
 

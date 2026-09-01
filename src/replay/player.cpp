@@ -3,9 +3,12 @@
 
 #include <obscura/replay/player.hpp>
 
+#include <span>
+
 #include <obscura/cases/case_data.hpp>
+#include <obscura/replay/recorder.hpp>
+#include <obscura/replay/state_hash.hpp>
 #include <obscura/world/evidence.hpp>
-#include <obscura/world/hull.hpp>
 #include <obscura/world/incident.hpp>
 
 namespace obscura::replay {

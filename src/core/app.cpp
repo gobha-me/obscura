@@ -3,6 +3,8 @@
 
 #include <obscura/core/app.hpp>
 
+#include <termforge/core/screen.hpp>
+
 namespace obscura::core {
 
 // Defined out of line rather than defaulted in the header: the header would

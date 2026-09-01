@@ -33,6 +33,11 @@ class App : public termforge::App {
   App();
   ~App() override;
 
+  App(const App&) = delete;
+  auto operator=(const App&) -> App& = delete;
+  App(App&&)                         = delete;
+  auto operator=(App&&) -> App&      = delete;
+
   [[nodiscard]] auto session() const -> const Session& { return m_session; }
   [[nodiscard]] auto ledger() const -> const Ledger& { return m_ledger; }
 

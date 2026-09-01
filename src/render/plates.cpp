@@ -3,6 +3,9 @@
 
 #include <obscura/render/plates.hpp>
 
+#include <obscura/world/evidence.hpp>
+#include <obscura/world/redaction.hpp>
+
 namespace obscura::render {
 
 namespace {

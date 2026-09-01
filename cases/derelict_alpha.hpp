@@ -24,19 +24,19 @@
 namespace obscura::cases::authored {
 
 inline constexpr std::array<Link, 4> kDerelictAlphaLinks{{
-    {0, 1},
-    {1, 2},
-    {2, 3},
-    {3, 0},
+    {.from = 0, .to = 1},
+    {.from = 1, .to = 2},
+    {.from = 2, .to = 3},
+    {.from = 3, .to = 0},
 }};
 
 inline constexpr CaseData kDerelictAlpha{
-    "derelict alpha",
-    4,   // rooms
-    3,   // actors
-    16,  // horizon, in ticks
-    12,  // attention budget
-    kDerelictAlphaLinks,
+    .name = "derelict alpha",
+    .room_count = 4,
+    .actor_count = 3,
+    .horizon = 16,
+    .attention = 12,
+    .links = kDerelictAlphaLinks,
 };
 
 }  // namespace obscura::cases::authored
