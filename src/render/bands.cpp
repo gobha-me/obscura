@@ -9,23 +9,24 @@
 
 namespace obscura::render {
 
-auto lay_out(const std::vector<Band>& bands, std::uint16_t total_rows) -> std::vector<BandRect> {
+auto lay_out(const std::vector<Band>& bands, std::uint16_t total_rows)
+    -> std::vector<BandRect> {
   std::vector<BandRect> out{};
   out.reserve(bands.size());
 
   // Pass one: hand every band its minimum, in declaration order, until the
-  // terminal runs out. A band that gets nothing still appears in the result with
-  // rows == 0 so that callers index the two lists in parallel.
-  std::uint32_t used         = 0;
+  // terminal runs out. A band that gets nothing still appears in the result
+  // with rows == 0 so that callers index the two lists in parallel.
+  std::uint32_t used = 0;
   std::uint32_t total_weight = 0;
 
   for (const Band& band : bands) {
-    const std::uint32_t want  = band.min_rows;
+    const std::uint32_t want = band.min_rows;
     const std::uint32_t grant = (used + want <= total_rows) ? want : 0;
 
     out.push_back(BandRect{
         .name = band.name,
-        .top  = static_cast<std::uint16_t>(used),
+        .top = static_cast<std::uint16_t>(used),
         .rows = static_cast<std::uint16_t>(grant),
     });
     used += grant;
@@ -50,8 +51,9 @@ auto lay_out(const std::vector<Band>& bands, std::uint16_t total_rows) -> std::v
     if (out[index].rows == 0) {
       continue;
     }
-    const std::uint32_t share = (base_pool * bands[index].weight) / total_weight;
-    const std::uint32_t give  = share < spare ? share : spare;
+    const std::uint32_t share =
+        (base_pool * bands[index].weight) / total_weight;
+    const std::uint32_t give = share < spare ? share : spare;
     out[index].rows = static_cast<std::uint16_t>(out[index].rows + give);
     spare -= give;
   }
@@ -77,4 +79,4 @@ auto lay_out(const std::vector<Band>& bands, std::uint16_t total_rows) -> std::v
   return out;
 }
 
-}  // namespace obscura::render
+} // namespace obscura::render

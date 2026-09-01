@@ -27,19 +27,19 @@ struct Step {
   // derived from screen layout, and layout depends on terminal size — replaying
   // "Inspect" without saying inspect *what* would reproduce differently in a
   // window of a different width.
-  std::size_t   subject{0};
+  std::size_t subject{0};
 };
 
 struct Recording {
   // Index into cases::all(). A case is authored, compiled-in data, so naming it
   // by index costs two bytes and cannot fail to resolve — unlike a path, which
   // is a way for a replay to break because a file moved.
-  std::size_t       case_index{0};
-  world::Seed       seed{0};
+  std::size_t case_index{0};
+  world::Seed seed{0};
   std::vector<Step> steps{};
   // The expected digest at the end of the run. Zero means "not sealed" — a
   // recording still being written has no final state to promise.
-  Digest            final_digest{0};
+  Digest final_digest{0};
 };
 
 class Recorder {
@@ -54,11 +54,13 @@ class Recorder {
   auto seal(Digest digest) -> void;
 
   [[nodiscard]] auto sealed() const -> bool { return m_sealed; }
-  [[nodiscard]] auto recording() const -> const Recording& { return m_recording; }
+  [[nodiscard]] auto recording() const -> const Recording& {
+    return m_recording;
+  }
 
  private:
   Recording m_recording{};
-  bool      m_sealed{false};
+  bool m_sealed{false};
 };
 
-}  // namespace obscura::replay
+} // namespace obscura::replay

@@ -23,7 +23,7 @@ auto CommitGesture::choose(std::size_t target) -> bool {
     return false;
   }
   m_target = target;
-  m_state  = GestureState::Targeted;
+  m_state = GestureState::Targeted;
   return true;
 }
 
@@ -38,8 +38,8 @@ auto CommitGesture::confirm() -> bool {
 }
 
 auto CommitGesture::cancel() -> void {
-  m_state  = GestureState::Idle;
+  m_state = GestureState::Idle;
   m_target = 0;
 }
 
-}  // namespace obscura::input
+} // namespace obscura::input

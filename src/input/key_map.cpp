@@ -14,7 +14,8 @@ namespace {
 
 // Vi keys for movement, because the hands are already there, and single letters
 // for the verbs. The table is the only place a binding is written down; a test
-// can assert it has no duplicate keys, which a scattered switch could not offer.
+// can assert it has no duplicate keys, which a scattered switch could not
+// offer.
 constexpr std::array<Binding, 9> kBindings{{
     {.key = 'k', .intent = Intent::MoveUp, .help = "move up"},
     {.key = 'j', .intent = Intent::MoveDown, .help = "move down"},
@@ -29,7 +30,7 @@ constexpr std::array<Binding, 9> kBindings{{
     {.key = 'q', .intent = Intent::Quit, .help = "quit"},
 }};
 
-}  // namespace
+} // namespace
 
 auto intent_for(char key) -> std::optional<Intent> {
   const auto* const found = std::ranges::find(kBindings, key, &Binding::key);
@@ -43,4 +44,4 @@ auto bindings() -> std::span<const Binding> {
   return kBindings;
 }
 
-}  // namespace obscura::input
+} // namespace obscura::input

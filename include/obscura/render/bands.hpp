@@ -23,14 +23,14 @@ struct Band {
   std::string_view name{};
   // Relative share of the leftover rows. Zero means "exactly `min_rows`, no
   // more" — which is what a status line wants.
-  std::uint16_t    weight{1};
-  std::uint16_t    min_rows{1};
+  std::uint16_t weight{1};
+  std::uint16_t min_rows{1};
 };
 
 struct BandRect {
   std::string_view name{};
-  std::uint16_t    top{0};
-  std::uint16_t    rows{0};
+  std::uint16_t top{0};
+  std::uint16_t rows{0};
 };
 
 // Lays `bands` out over `total_rows`, top to bottom.
@@ -41,6 +41,7 @@ struct BandRect {
 // order. When the terminal is too short for the minimums, later bands are
 // truncated to zero rows rather than every band being squeezed — a half-height
 // log view is readable, a screen of one-row slivers is not.
-[[nodiscard]] auto lay_out(const std::vector<Band>& bands, std::uint16_t total_rows) -> std::vector<BandRect>;
+[[nodiscard]] auto lay_out(const std::vector<Band>& bands,
+                           std::uint16_t total_rows) -> std::vector<BandRect>;
 
-}  // namespace obscura::render
+} // namespace obscura::render

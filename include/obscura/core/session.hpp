@@ -18,12 +18,12 @@
 namespace obscura::core {
 
 enum class Phase : std::uint8_t {
-  Boot,      // nothing loaded yet
-  Briefing,  // the case is loaded; the player has not begun
-  Survey,    // the interactive body of a run: spend attention, raise fidelity
-  Accuse,    // the commit gesture has armed; a verdict is being composed
-  Verdict,   // the accusation resolved, right or wrong
-  Closed,    // terminal state; the run may be recorded but not continued
+  Boot,     // nothing loaded yet
+  Briefing, // the case is loaded; the player has not begun
+  Survey,   // the interactive body of a run: spend attention, raise fidelity
+  Accuse,   // the commit gesture has armed; a verdict is being composed
+  Verdict,  // the accusation resolved, right or wrong
+  Closed,   // terminal state; the run may be recorded but not continued
 };
 
 enum class Signal : std::uint8_t {
@@ -33,7 +33,7 @@ enum class Signal : std::uint8_t {
   CancelCommit,
   Commit,
   Dismiss,
-  Abort,  // legal from anywhere: a player quitting mid-run is not an error
+  Abort, // legal from anywhere: a player quitting mid-run is not an error
 };
 
 // Pure transition function. Returns the phase a session in `from` reaches on
@@ -43,8 +43,8 @@ enum class Signal : std::uint8_t {
 [[nodiscard]] auto next_phase(Phase from, Signal signal) -> Phase;
 
 // The FSM proper: a phase plus the one operation that changes it. Kept a class
-// rather than a bare enum so that the invariants (terminal states stay terminal)
-// live in one place instead of at every call site.
+// rather than a bare enum so that the invariants (terminal states stay
+// terminal) live in one place instead of at every call site.
 class Session {
  public:
   Session() = default;
@@ -54,10 +54,12 @@ class Session {
   // True when the phase actually changed.
   auto dispatch(Signal signal) -> bool;
 
-  [[nodiscard]] auto is_closed() const -> bool { return m_phase == Phase::Closed; }
+  [[nodiscard]] auto is_closed() const -> bool {
+    return m_phase == Phase::Closed;
+  }
 
  private:
   Phase m_phase{Phase::Boot};
 };
 
-}  // namespace obscura::core
+} // namespace obscura::core

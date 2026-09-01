@@ -3,9 +3,9 @@
 // [SIM] The derelict itself: rooms, and which rooms connect to which.
 //
 // What belongs here: the static topology a case is played on — room identity,
-// adjacency, and the queries that walk it (reachability, distance, chokepoints).
-// The hull does not change during a run; anything that moves belongs in
-// actors.hpp, anything that happened belongs in incident.hpp.
+// adjacency, and the queries that walk it (reachability, distance,
+// chokepoints). The hull does not change during a run; anything that moves
+// belongs in actors.hpp, anything that happened belongs in incident.hpp.
 //
 // Sim-purity applies to this whole directory and is enforced by
 // tools/lint/sim_purity.sh (ctest: sim-purity). In short: integers only, no
@@ -27,15 +27,15 @@ inline constexpr RoomId kNoRoom = static_cast<RoomId>(0xFFFF);
 // sorted so that traversal order is a property of the data rather than of
 // insertion history, which is what keeps two runs of the same seed identical.
 struct Room {
-  RoomId              id{kNoRoom};
+  RoomId id{kNoRoom};
   std::vector<RoomId> neighbors{};
 };
 
 // The hull is a plain adjacency list indexed by RoomId. Deliberately a vector
 // rather than a hashed container: a hash map's iteration order is an
-// implementation detail, and this is exactly the kind of place where letting one
-// leak into the simulation produces a run that replays differently on another
-// standard library.
+// implementation detail, and this is exactly the kind of place where letting
+// one leak into the simulation produces a run that replays differently on
+// another standard library.
 class Hull {
  public:
   Hull() = default;
@@ -60,4 +60,4 @@ class Hull {
   std::vector<Room> m_rooms{};
 };
 
-}  // namespace obscura::world
+} // namespace obscura::world

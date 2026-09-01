@@ -19,10 +19,10 @@
 namespace obscura::input {
 
 enum class GestureState : std::uint8_t {
-  Idle,      // nothing in progress
-  Armed,     // the player asked to accuse; no target yet
-  Targeted,  // a target is chosen; one confirm away
-  Fired,     // the accusation was committed — terminal
+  Idle,     // nothing in progress
+  Armed,    // the player asked to accuse; no target yet
+  Targeted, // a target is chosen; one confirm away
+  Fired,    // the accusation was committed — terminal
 };
 
 class CommitGesture {
@@ -46,7 +46,7 @@ class CommitGesture {
 
  private:
   GestureState m_state{GestureState::Idle};
-  std::size_t  m_target{0};
+  std::size_t m_target{0};
 };
 
-}  // namespace obscura::input
+} // namespace obscura::input

@@ -35,8 +35,8 @@ class App : public termforge::App {
 
   App(const App&) = delete;
   auto operator=(const App&) -> App& = delete;
-  App(App&&)                         = delete;
-  auto operator=(App&&) -> App&      = delete;
+  App(App&&) = delete;
+  auto operator=(App&&) -> App& = delete;
 
   [[nodiscard]] auto session() const -> const Session& { return m_session; }
   [[nodiscard]] auto ledger() const -> const Ledger& { return m_ledger; }
@@ -49,7 +49,7 @@ class App : public termforge::App {
 
  private:
   Session m_session{};
-  Ledger  m_ledger{};
+  Ledger m_ledger{};
 };
 
-}  // namespace obscura::core
+} // namespace obscura::core

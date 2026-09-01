@@ -73,7 +73,7 @@ constexpr ImagePlacementOptions kPlatePlacement{
     .layer = ImageLayer::below_text(),
 };
 
-auto draw_plate(KittyDriver &driver, const EncodedImage &plate) {
+auto draw_plate(KittyDriver& driver, const EncodedImage& plate) {
   return driver.draw_image(kPlateDestination, plate, kPlatePlacement);
 }
 
@@ -94,7 +94,7 @@ auto draw_plate(KittyDriver &driver, const EncodedImage &plate) {
 // misquoted in both directions. `image_transmit` reports base64 PLUS framing:
 // the driver tallies the whole byte range it appends around transmit(), not
 // just the payload it encoded.
-constexpr std::size_t kChunkSize = 4096;  // KittyDriver::transmit
+constexpr std::size_t kChunkSize = 4096; // KittyDriver::transmit
 constexpr std::uint64_t kContinuationFraming = 13;
 
 // The first chunk's header is digit-dependent — image id, s= and v= all grow
@@ -116,20 +116,21 @@ constexpr std::uint64_t first_chunk_framing(int w, int h, unsigned id,
   // happens to cost. Rgba32 ships as f=32 and is one shorter, and a hardcode
   // would surface that as a one-byte discrepancy in a thousand-byte number —
   // the same trap the image id above is spelled out to avoid.
-  return 1 + 2 + 4 + 4                              //  \033 _G a=t, t=d,
-         + 2 + digits(format_code) + 1              //  f=<fmt>,
-         + 2 + digits(id) + 1                       //  i=<id>,
-         + 2 + digits(static_cast<std::uint64_t>(w)) + 1   //  s=<w>,
-         + 2 + digits(static_cast<std::uint64_t>(h)) + 1   //  v=<h>,
-         + 4 + 4                                    //  m=0, q=2;
-         + 2;                                       //  \033 backslash
+  return 1 + 2 + 4 + 4                                   //  \033 _G a=t, t=d,
+         + 2 + digits(format_code) + 1                   //  f=<fmt>,
+         + 2 + digits(id) + 1                            //  i=<id>,
+         + 2 + digits(static_cast<std::uint64_t>(w)) + 1 //  s=<w>,
+         + 2 + digits(static_cast<std::uint64_t>(h)) + 1 //  v=<h>,
+         + 4 + 4                                         //  m=0, q=2;
+         + 2;                                            //  \033 backslash
 }
 
 // termforge's wire code for ImageFormat::Png.
 constexpr unsigned kFormatPng = 100;
 
 constexpr auto expected_transmit(std::size_t payload, int w, int h, unsigned id,
-                                 unsigned format_code = kFormatPng) -> std::uint64_t {
+                                 unsigned format_code = kFormatPng)
+    -> std::uint64_t {
   const std::uint64_t b64 = (static_cast<std::uint64_t>(payload) + 2) / 3 * 4;
   const std::uint64_t chunks = (b64 + kChunkSize - 1) / kChunkSize;
   return b64 + first_chunk_framing(w, h, id, format_code) +
@@ -152,8 +153,8 @@ constexpr std::uint64_t kWireBudget = 8192;
 // cost of the signature moment is not something that should be able to move
 // without a reviewer seeing the number move. Re-bake, run the test, paste in
 // what it reports, and look at the delta before committing it.
-constexpr std::size_t kPlateBytes = 756;         // assets/plates/hold-d0.png
-constexpr std::uint64_t kMeasuredTransmit = 1051;  // base64 + APC framing
+constexpr std::size_t kPlateBytes = 756;          // assets/plates/hold-d0.png
+constexpr std::uint64_t kMeasuredTransmit = 1051; // base64 + APC framing
 constexpr std::uint64_t kMeasuredEdit = 44; // cursor + scaled z=-1 placement
 constexpr std::uint64_t kMeasuredTotal = kMeasuredTransmit + kMeasuredEdit;
 static_assert(kMeasuredTotal <= kWireBudget,
@@ -213,12 +214,14 @@ auto read_u32(std::span<const std::byte> b, std::size_t at) -> std::uint32_t {
 }
 
 auto parse_png(std::span<const std::byte> blob) -> PngHeader {
-  constexpr unsigned char kSig[8] = {0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
+  constexpr unsigned char kSig[8] = {0x89, 0x50, 0x4E, 0x47,
+                                     0x0D, 0x0A, 0x1A, 0x0A};
   PngHeader out;
   if (blob.size() < sizeof(kSig)) return out;
   out.signature_ok = true;
   for (std::size_t i = 0; i < sizeof(kSig); ++i) {
-    if (static_cast<unsigned char>(blob[i]) != kSig[i]) out.signature_ok = false;
+    if (static_cast<unsigned char>(blob[i]) != kSig[i])
+      out.signature_ok = false;
   }
   if (!out.signature_ok) return out;
 
@@ -233,7 +236,8 @@ auto parse_png(std::span<const std::byte> blob) -> PngHeader {
     const auto kind = blob.subspan(at + 4, 4);
     const auto tag = [&](const char (&name)[5]) {
       for (int i = 0; i < 4; ++i) {
-        if (static_cast<char>(kind[static_cast<std::size_t>(i)]) != name[i]) return false;
+        if (static_cast<char>(kind[static_cast<std::size_t>(i)]) != name[i])
+          return false;
       }
       return true;
     };
@@ -257,12 +261,12 @@ auto parse_png(std::span<const std::byte> blob) -> PngHeader {
       out.well_formed = (data + length + 4 == blob.size());
       return out;
     }
-    at = data + length + 4;  // + CRC
+    at = data + length + 4; // + CRC
   }
   return out;
 }
 
-}  // namespace
+} // namespace
 
 // ── failures first ──────────────────────────────────────────────────────────
 
@@ -304,7 +308,7 @@ TEST_CASE("plate: the payload's own header agrees with what we declare",
   }
 
   SECTION("it is the four-colour indexed format the spec calls for") {
-    CHECK(png.colour_type == 3);  // indexed
+    CHECK(png.colour_type == 3); // indexed
     CHECK(png.bit_depth == 8);
     // Four inks plus the transparent index. The count is asserted rather than
     // bounded: a fifth ink is an art-direction change, and it should have to be
@@ -324,8 +328,9 @@ TEST_CASE("plate: the payload's own header agrees with what we declare",
   }
 }
 
-TEST_CASE("plate: a tier that cannot carry the format refuses, and emits nothing",
-          "[plate][failure]") {
+TEST_CASE(
+    "plate: a tier that cannot carry the format refuses, and emits nothing",
+    "[plate][failure]") {
   // "No degraded mode." A driver with no out-of-band channel must say so, not
   // approximate the plate with whatever it can manage.
   const EncodedImage plate = obscura::render::hold_d0();
@@ -365,8 +370,8 @@ TEST_CASE("plate: a refused placement costs nothing", "[plate][failure]") {
   SECTION("a rect one cell short of the image is not an Exact fit") {
     const Extent cells = p.drv.image_cell_extent(plate.pixels);
     REQUIRE(cells.w > 1);
-    const auto result =
-        p.drv.draw_image(Rect{0, 0, cells.w - 1, cells.h}, plate, PlacementFit::Exact);
+    const auto result = p.drv.draw_image(Rect{0, 0, cells.w - 1, cells.h},
+                                         plate, PlacementFit::Exact);
     REQUIRE_FALSE(result.has_value());
     p.drv.flush();
     CHECK(p.sink.empty());
@@ -409,14 +414,15 @@ TEST_CASE("plate: the wire cost is what base64 and the APC framing predict",
   // thousand-byte number, sending the next reader to the base64 arithmetic
   // before the id.
   constexpr unsigned kFirstImageId = 1;
-  CHECK(sink.find("i=" + std::to_string(kFirstImageId) + ",") != std::string::npos);
+  CHECK(sink.find("i=" + std::to_string(kFirstImageId) + ",") !=
+        std::string::npos);
   CHECK(sink.find(",c=20,r=7,z=-1,C=1,q=2") != std::string::npos);
 
-  const std::uint64_t predicted = expected_transmit(plate.bytes.size(), plate.pixels.w,
-                                                    plate.pixels.h, kFirstImageId);
+  const std::uint64_t predicted = expected_transmit(
+      plate.bytes.size(), plate.pixels.w, plate.pixels.h, kFirstImageId);
 
   CHECK(f.image_transmit == predicted);
-  CHECK(f.cells == 0);       // nothing here drew text
+  CHECK(f.cells == 0); // nothing here drew text
 
   // The asset, and what it actually cost. See kPlateBytes above for why these
   // are literals rather than derived.
@@ -430,7 +436,8 @@ TEST_CASE("plate: the wire cost is what base64 and the APC framing predict",
   CHECK(f.total() <= kWireBudget);
 }
 
-TEST_CASE("plate: the oracle holds across the chunk boundary", "[plate][bytes]") {
+TEST_CASE("plate: the oracle holds across the chunk boundary",
+          "[plate][bytes]") {
   // The committed plate is one chunk, so the continuation term in
   // expected_transmit() — and the 13 bytes it multiplies — is dead code as far
   // as the plate itself is concerned. That term is not idle: the configure-time
@@ -454,8 +461,8 @@ TEST_CASE("plate: the oracle holds across the chunk boundary", "[plate][bytes]")
 
   constexpr int kW = 240;
   constexpr int kH = 160;
-  const EncodedImage synthetic{ImageFormat::Png, std::span<const std::byte>{filler},
-                               Extent{kW, kH}};
+  const EncodedImage synthetic{
+      ImageFormat::Png, std::span<const std::byte>{filler}, Extent{kW, kH}};
 
   REQUIRE(draw_plate(drv, synthetic));
   drv.flush();
@@ -469,7 +476,8 @@ TEST_CASE("plate: the oracle holds across the chunk boundary", "[plate][bytes]")
   REQUIRE(b64 > kChunkSize);
   REQUIRE(b64 < 2 * kChunkSize);
 
-  CHECK(drv.last_frame_bytes().image_transmit == expected_transmit(kPayload, kW, kH, 1));
+  CHECK(drv.last_frame_bytes().image_transmit ==
+        expected_transmit(kPayload, kW, kH, 1));
 }
 
 TEST_CASE("plate: transmitting it twice costs once", "[plate][bytes]") {

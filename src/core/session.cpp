@@ -17,8 +17,7 @@ auto next_phase(Phase from, Signal signal) -> Phase {
     case Phase::Boot:
       return signal == Signal::CaseLoaded ? Phase::Briefing : from;
 
-    case Phase::Briefing:
-      return signal == Signal::Begin ? Phase::Survey : from;
+    case Phase::Briefing: return signal == Signal::Begin ? Phase::Survey : from;
 
     case Phase::Survey:
       return signal == Signal::ArmCommit ? Phase::Accuse : from;
@@ -35,8 +34,7 @@ auto next_phase(Phase from, Signal signal) -> Phase {
     case Phase::Verdict:
       return signal == Signal::Dismiss ? Phase::Closed : from;
 
-    case Phase::Closed:
-      return Phase::Closed;
+    case Phase::Closed: return Phase::Closed;
   }
 
   return from;
@@ -51,4 +49,4 @@ auto Session::dispatch(Signal signal) -> bool {
   return true;
 }
 
-}  // namespace obscura::core
+} // namespace obscura::core

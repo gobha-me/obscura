@@ -30,20 +30,20 @@ struct Link {
 };
 
 struct CaseData {
-  std::string_view      name{};
-  world::RoomId         room_count{0};
-  world::ActorId        actor_count{0};
+  std::string_view name{};
+  world::RoomId room_count{0};
+  world::ActorId actor_count{0};
   // How many ticks the incident may fall within.
-  world::Tick           horizon{0};
+  world::Tick horizon{0};
   // The run's attention budget, in whole looks.
-  std::uint32_t         attention{0};
+  std::uint32_t attention{0};
   std::span<const Link> links{};
 };
 
 // The hull and roster a case describes, built together because an actor's
 // starting room is only meaningful against a hull.
 struct World {
-  world::Hull   hull{};
+  world::Hull hull{};
   world::Roster roster{};
 };
 
@@ -57,4 +57,4 @@ struct World {
 // recordings — append.
 [[nodiscard]] auto all() -> std::span<const CaseData>;
 
-}  // namespace obscura::cases
+} // namespace obscura::cases

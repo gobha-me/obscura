@@ -7,6 +7,7 @@
 // the source directories, and the direction of dependency between them is the
 // one architectural rule this project has:
 //
+// clang-format off
 //   world/   [SIM]  the deterministic simulation. Depends on NOTHING else here.
 //   core/           session lifecycle, the ledger, the TermForge App subclass.
 //   render/         turns simulation state into cells. Reads world/, never writes.
@@ -14,12 +15,13 @@
 //   audio/          a sink interface and a do-nothing implementation.
 //   replay/         records intents and replays them against a fresh world.
 //   cases/          authored scenarios, as constexpr data.
+// clang-format on
 //
 // The premise the layering protects: rendering fidelity IS the game state. What
 // the player can see is a redaction applied to a fully determined world, so the
 // world has to be reconstructible from a seed and a list of intents alone —
-// which is what makes replay/ and the sim-purity lint (tools/lint/sim_purity.sh)
-// worth having.
+// which is what makes replay/ and the sim-purity lint
+// (tools/lint/sim_purity.sh) worth having.
 
 #include <obscura/audio/sink.hpp>
 #include <obscura/cases/case_data.hpp>
@@ -50,4 +52,4 @@ namespace obscura {
 // pass with the archive missing entirely.
 auto version_string() -> const char*;
 
-}  // namespace obscura
+} // namespace obscura

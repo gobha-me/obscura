@@ -42,4 +42,4 @@ auto Roster::all() const -> const std::vector<Actor>& {
   return m_actors;
 }
 
-}  // namespace obscura::world
+} // namespace obscura::world

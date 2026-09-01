@@ -13,7 +13,7 @@ namespace {
 
 const std::vector<RoomId> kNoNeighbors{};
 
-}  // namespace
+} // namespace
 
 auto Hull::room_count() const -> std::size_t {
   return m_rooms.size();
@@ -58,4 +58,4 @@ auto Hull::neighbors(RoomId id) const -> const std::vector<RoomId>& {
   return m_rooms[id].neighbors;
 }
 
-}  // namespace obscura::world
+} // namespace obscura::world

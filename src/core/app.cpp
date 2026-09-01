@@ -11,7 +11,7 @@ namespace obscura::core {
 // otherwise need the complete definition of everything the base class holds by
 // pointer, and the compiler would emit the vtable into every translation unit
 // that includes it.
-App::App()  = default;
+App::App() = default;
 App::~App() = default;
 
 auto App::on_render(termforge::Screen& screen) -> void {
@@ -22,4 +22,4 @@ auto App::on_render(termforge::Screen& screen) -> void {
   screen.clear();
 }
 
-}  // namespace obscura::core
+} // namespace obscura::core

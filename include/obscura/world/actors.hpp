@@ -20,13 +20,13 @@
 namespace obscura::world {
 
 using ActorId = std::uint16_t;
-using Tick    = std::uint32_t;
+using Tick = std::uint32_t;
 
 inline constexpr ActorId kNoActor = static_cast<ActorId>(0xFFFF);
 
 struct Actor {
   ActorId id{kNoActor};
-  RoomId  room{kNoRoom};
+  RoomId room{kNoRoom};
 };
 
 // The crew, indexed by ActorId. A vector for the same determinism reason the
@@ -55,4 +55,4 @@ class Roster {
   std::vector<Actor> m_actors{};
 };
 
-}  // namespace obscura::world
+} // namespace obscura::world

@@ -15,9 +15,9 @@ namespace obscura::replay {
 
 namespace {
 
-constexpr Digest kPrime = 0x0000'0100'0000'01B3ULL;  // FNV-1a 64-bit prime
+constexpr Digest kPrime = 0x0000'0100'0000'01B3ULL; // FNV-1a 64-bit prime
 
-}  // namespace
+} // namespace
 
 auto update(Digest digest, std::uint8_t byte) -> Digest {
   return (digest ^ static_cast<Digest>(byte)) * kPrime;
@@ -28,7 +28,8 @@ auto update_u64(Digest digest, std::uint64_t value) -> Digest {
   // representation: the digest has to match on a big-endian host too, and a
   // reinterpret would quietly not.
   for (unsigned shift = 0; shift < 64U; shift += 8U) {
-    digest = update(digest, static_cast<std::uint8_t>((value >> shift) & 0xFFU));
+    digest =
+        update(digest, static_cast<std::uint8_t>((value >> shift) & 0xFFU));
   }
   return digest;
 }
@@ -93,4 +94,4 @@ auto hash(const core::Ledger& ledger) -> Digest {
   return digest;
 }
 
-}  // namespace obscura::replay
+} // namespace obscura::replay

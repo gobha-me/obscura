@@ -27,8 +27,8 @@ auto main() -> int {
   // null-terminated. %.*s with an explicit length would be correct today and a
   // trap the next time someone adds a field. An ostream just takes the
   // string_view.
-  std::cout << PROGRAM_NAME << ' ' << VERSION_MAJOR << '.' << VERSION_MINOR << '.'
-            << VERSION_PATCH << '\n';
+  std::cout << PROGRAM_NAME << ' ' << VERSION_MAJOR << '.' << VERSION_MINOR
+            << '.' << VERSION_PATCH << '\n';
 
   return EXIT_SUCCESS;
 }

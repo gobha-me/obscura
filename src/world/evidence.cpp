@@ -10,7 +10,8 @@
 
 namespace obscura::world {
 
-auto derive(const Hull& hull, const Roster& roster, const Incident& incident) -> EvidenceSet {
+auto derive(const Hull& hull, const Roster& roster, const Incident& incident)
+    -> EvidenceSet {
   EvidenceSet items{};
 
   if (!is_well_formed(incident, hull, roster)) {
@@ -47,13 +48,16 @@ auto derive(const Hull& hull, const Roster& roster, const Incident& incident) ->
   return items;
 }
 
-auto is_consistent(const Evidence& item, const Roster& roster, const Incident& incident) -> bool {
+auto is_consistent(const Evidence& item, const Roster& roster,
+                   const Incident& incident) -> bool {
   switch (item.kind) {
     case EvidenceKind::Presence:
-      return item.subject == incident.culprit && item.where == incident.scene && item.when == incident.when;
+      return item.subject == incident.culprit && item.where == incident.scene &&
+             item.when == incident.when;
 
     case EvidenceKind::Absence:
-      return item.subject != incident.culprit || item.where != incident.scene || item.when != incident.when;
+      return item.subject != incident.culprit || item.where != incident.scene ||
+             item.when != incident.when;
 
     case EvidenceKind::Trace:
       return item.where == incident.scene && item.when == incident.when;
@@ -67,4 +71,4 @@ auto is_consistent(const Evidence& item, const Roster& roster, const Incident& i
   return false;
 }
 
-}  // namespace obscura::world
+} // namespace obscura::world

@@ -19,4 +19,4 @@ auto version_string() -> const char* {
   return PROGRAM_NAME.data();
 }
 
-}  // namespace obscura
+} // namespace obscura

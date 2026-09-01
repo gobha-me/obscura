@@ -26,7 +26,7 @@ constexpr std::array<CaseData, 1> kCases{{
     authored::kDerelictAlpha,
 }};
 
-}  // namespace
+} // namespace
 
 auto build(const CaseData& data) -> World {
   World world{};
@@ -50,4 +50,4 @@ auto all() -> std::span<const CaseData> {
   return kCases;
 }
 
-}  // namespace obscura::cases
+} // namespace obscura::cases
