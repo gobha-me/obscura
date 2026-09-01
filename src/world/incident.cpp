@@ -4,6 +4,9 @@
 
 #include <obscura/world/incident.hpp>
 
+#include <obscura/world/actors.hpp>
+#include <obscura/world/hull.hpp>
+
 namespace obscura::world {
 
 auto is_well_formed(const Incident& incident, const Hull& hull, const Roster& roster) -> bool {

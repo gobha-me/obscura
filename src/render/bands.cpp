@@ -3,6 +3,10 @@
 
 #include <obscura/render/bands.hpp>
 
+#include <cstddef>
+#include <cstdint>
+#include <vector>
+
 namespace obscura::render {
 
 auto lay_out(const std::vector<Band>& bands, std::uint16_t total_rows) -> std::vector<BandRect> {
@@ -19,7 +23,11 @@ auto lay_out(const std::vector<Band>& bands, std::uint16_t total_rows) -> std::v
     const std::uint32_t want  = band.min_rows;
     const std::uint32_t grant = (used + want <= total_rows) ? want : 0;
 
-    out.push_back(BandRect{band.name, static_cast<std::uint16_t>(used), static_cast<std::uint16_t>(grant)});
+    out.push_back(BandRect{
+        .name = band.name,
+        .top  = static_cast<std::uint16_t>(used),
+        .rows = static_cast<std::uint16_t>(grant),
+    });
     used += grant;
 
     if (grant > 0) {

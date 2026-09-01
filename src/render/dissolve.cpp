@@ -5,6 +5,11 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
+#include <string>
+#include <string_view>
+
+#include <obscura/render/plates.hpp>
 
 namespace obscura::render {
 

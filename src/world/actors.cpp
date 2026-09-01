@@ -3,6 +3,11 @@
 
 #include <obscura/world/actors.hpp>
 
+#include <cstddef>
+#include <vector>
+
+#include <obscura/world/hull.hpp>
+
 namespace obscura::world {
 
 auto Roster::size() const -> std::size_t {
@@ -11,7 +16,7 @@ auto Roster::size() const -> std::size_t {
 
 auto Roster::add(RoomId start) -> ActorId {
   const auto id = static_cast<ActorId>(m_actors.size());
-  m_actors.push_back(Actor{id, start});
+  m_actors.push_back(Actor{.id = id, .room = start});
   return id;
 }
 

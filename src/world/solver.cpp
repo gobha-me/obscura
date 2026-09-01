@@ -6,6 +6,9 @@
 
 #include <algorithm>
 
+#include <obscura/world/actors.hpp>
+#include <obscura/world/evidence.hpp>
+#include <obscura/world/hull.hpp>
 #include <obscura/world/incident.hpp>
 
 namespace obscura::world {
@@ -29,7 +32,11 @@ auto solve(const Hull& hull, const Roster& roster, const EvidenceSet& evidence) 
   }
 
   for (const Actor& actor : roster.all()) {
-    const Incident hypothesis{actor.id, trace->where, trace->when};
+    const Incident hypothesis{
+        .culprit = actor.id,
+        .scene   = trace->where,
+        .when    = trace->when,
+    };
 
     const bool survives = std::ranges::all_of(evidence, [&](const Evidence& item) {
       return is_consistent(item, roster, hypothesis);

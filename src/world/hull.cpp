@@ -4,6 +4,8 @@
 #include <obscura/world/hull.hpp>
 
 #include <algorithm>
+#include <cstddef>
+#include <vector>
 
 namespace obscura::world {
 
@@ -19,7 +21,7 @@ auto Hull::room_count() const -> std::size_t {
 
 auto Hull::add_room() -> RoomId {
   const auto id = static_cast<RoomId>(m_rooms.size());
-  m_rooms.push_back(Room{id, {}});
+  m_rooms.push_back(Room{.id = id, .neighbors = {}});
   return id;
 }
 
