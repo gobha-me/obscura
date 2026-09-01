@@ -4,9 +4,9 @@
 //
 // What belongs here: a stable digest over the parts of a run that must
 // reproduce. It is the assertion a replay makes: play the recorded intents back
-// against a fresh world from the same seed, hash both, compare. A mismatch names
-// the frame where determinism broke, which is far more useful than a test that
-// says the ending differed.
+// against a fresh world from the same seed, hash both, compare. A mismatch
+// names the frame where determinism broke, which is far more useful than a test
+// that says the ending differed.
 //
 // Stable means stable across compilers and standard libraries, not just across
 // two runs of the same binary. That rules out hashing anything whose iteration
@@ -37,12 +37,12 @@ inline constexpr Digest kInitial = 0xCBF29CE484222325ULL;
 [[nodiscard]] auto hash(const world::Incident& incident) -> Digest;
 
 // Order-sensitive by design: world::derive promises a stable sequence, so two
-// sets holding the same items in a different order are NOT the same state — they
-// came from different code paths, and hiding that would hide the bug.
+// sets holding the same items in a different order are NOT the same state —
+// they came from different code paths, and hiding that would hide the bug.
 [[nodiscard]] auto hash(const world::EvidenceSet& evidence) -> Digest;
 
 [[nodiscard]] auto hash(const world::RedactionMask& mask) -> Digest;
 
 [[nodiscard]] auto hash(const core::Ledger& ledger) -> Digest;
 
-}  // namespace obscura::replay
+} // namespace obscura::replay

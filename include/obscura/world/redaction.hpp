@@ -26,10 +26,10 @@ namespace obscura::world {
 // run — it is raised by spending attention, never lowered by an accident of
 // drawing order.
 enum class Fidelity : std::uint8_t {
-  Hidden  = 0,  // the item is not known to exist
-  Sensed  = 1,  // it exists; kind and location are noise
-  Partial = 2,  // kind and room resolve; the tick does not
-  Full    = 3,  // the item reads as derived
+  Hidden = 0,  // the item is not known to exist
+  Sensed = 1,  // it exists; kind and location are noise
+  Partial = 2, // kind and room resolve; the tick does not
+  Full = 3,    // the item reads as derived
 };
 
 // A fidelity level per item, parallel to the EvidenceSet it was built from.
@@ -59,6 +59,7 @@ class RedactionMask {
 // the current fidelity does not cover reset to their sentinels. The result is a
 // value, not a view — the caller must not be able to reach past it into ground
 // truth by holding a reference.
-[[nodiscard]] auto project(const EvidenceSet& complete, const RedactionMask& mask) -> EvidenceSet;
+[[nodiscard]] auto project(const EvidenceSet& complete,
+                           const RedactionMask& mask) -> EvidenceSet;
 
-}  // namespace obscura::world
+} // namespace obscura::world

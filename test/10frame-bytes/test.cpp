@@ -57,7 +57,9 @@ constexpr int kRows = 24;
 // draw, which is the quantity M0 gates on. If this stops matching, read the new
 // escape in FallbackDriver::draw_text and update the arithmetic here — do not
 // relax it into the band below.
-constexpr auto digits(int n) -> std::uint64_t { return n < 10 ? 1 : (n < 100 ? 2 : 3); }
+constexpr auto digits(int n) -> std::uint64_t {
+  return n < 10 ? 1 : (n < 100 ? 2 : 3);
+}
 
 constexpr auto full_repaint_bytes(int cols, int rows) -> std::uint64_t {
   std::uint64_t total = 0;
@@ -103,7 +105,9 @@ static_assert(kFullRepaint == 2079, "the 80x24 wire-format oracle moved");
 // overriding, and TermForge's own test/23pacing does the same thing.
 class OfflineProbe : public obscura::core::App {
  protected:
-  auto now_steady() const -> std::chrono::steady_clock::time_point override { return m_now; }
+  auto now_steady() const -> std::chrono::steady_clock::time_point override {
+    return m_now;
+  }
   auto wait_readable(int /*timeout_ms*/) -> bool override { return false; }
   auto read_available(char* /*out*/, int /*max*/) -> int override { return 0; }
 
@@ -130,8 +134,12 @@ class FrameProbe : public OfflineProbe {
     driver().clear_output();
   }
 
-  [[nodiscard]] auto last_frame() -> FrameBytes { return driver().last_frame_bytes(); }
-  [[nodiscard]] auto cumulative() -> FrameBytes { return driver().total_bytes(); }
+  [[nodiscard]] auto last_frame() -> FrameBytes {
+    return driver().last_frame_bytes();
+  }
+  [[nodiscard]] auto cumulative() -> FrameBytes {
+    return driver().total_bytes();
+  }
   [[nodiscard]] auto emitted() const -> const std::string& { return m_sink; }
 
  private:
@@ -153,7 +161,7 @@ class ThrowingProbe : public OfflineProbe {
 
  protected:
   auto on_render(termforge::Screen& screen) -> void override {
-    obscura::core::App::on_render(screen);  // the real one first, then fail
+    obscura::core::App::on_render(screen); // the real one first, then fail
     // The cap comes BEFORE the throw and is the reason this test cannot hang.
     // test_run_guarded drives the real loop, which exits only on quit() or an
     // exception; if a future on_render change meant the throw below were never
@@ -171,7 +179,7 @@ class ThrowingProbe : public OfflineProbe {
   int m_renders{0};
 };
 
-}  // namespace
+} // namespace
 
 // ── Failure modes first ─────────────────────────────────────────────────────
 
@@ -239,7 +247,7 @@ TEST_CASE("app: a throwing frame runs teardown before it propagates",
   ThrowingProbe app;
   REQUIRE_THROWS_AS(app.guarded(), RenderFailure);
   CHECK_FALSE(app.test_winch_hooked());
-  CHECK(app.renders() == 1);  // it failed on frame 1; it did not spin
+  CHECK(app.renders() == 1); // it failed on frame 1; it did not spin
 }
 
 TEST_CASE("app: rendering decides nothing", "[app][failure]") {
@@ -282,7 +290,8 @@ TEST_CASE("app: the meter reports the cost the wire format predicts",
   CHECK(app.cumulative().image_edit == 0);
 }
 
-TEST_CASE("app: a second identical frame costs nothing at all", "[app][bytes]") {
+TEST_CASE("app: a second identical frame costs nothing at all",
+          "[app][bytes]") {
   // T-H4's own acceptance criterion, at OBSCURA's call site — and here it is
   // exact rather than approximate. Frame 1 is a full repaint, because the
   // Renderer has no previous frame to diff against. Frame 2 draws the same
@@ -301,7 +310,7 @@ TEST_CASE("app: a second identical frame costs nothing at all", "[app][bytes]") 
 
   CHECK(app.last_frame().total() == 0);
   CHECK(app.last_frame().total() <= kIdleCeiling);
-  CHECK(app.cumulative().total() == kFullRepaint);  // frame 1 only
+  CHECK(app.cumulative().total() == kFullRepaint); // frame 1 only
 }
 
 TEST_CASE("app: the full-repaint cost is now just above the idle budget",

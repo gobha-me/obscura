@@ -20,15 +20,16 @@
 namespace obscura::core {
 
 enum class EntryKind : std::uint8_t {
-  Spend,    // attention was spent on an evidence index
-  Resolve,  // an item's fidelity rose
-  Note,     // the player wrote something down
-  Accuse,   // an accusation was committed
+  Spend,   // attention was spent on an evidence index
+  Resolve, // an item's fidelity rose
+  Note,    // the player wrote something down
+  Accuse,  // an accusation was committed
 };
 
 struct Entry {
-  EntryKind   kind{EntryKind::Note};
-  std::size_t subject{0};  // an evidence index for Spend/Resolve, an actor id for Accuse
+  EntryKind kind{EntryKind::Note};
+  std::size_t subject{
+      0}; // an evidence index for Spend/Resolve, an actor id for Accuse
   std::string text{};
 };
 
@@ -48,13 +49,15 @@ class Ledger {
 
   [[nodiscard]] auto remaining() const -> std::uint32_t { return m_remaining; }
 
-  [[nodiscard]] auto entries() const -> const std::vector<Entry>& { return m_entries; }
+  [[nodiscard]] auto entries() const -> const std::vector<Entry>& {
+    return m_entries;
+  }
 
   [[nodiscard]] auto size() const -> std::size_t { return m_entries.size(); }
 
  private:
-  std::uint32_t      m_remaining{0};
+  std::uint32_t m_remaining{0};
   std::vector<Entry> m_entries{};
 };
 
-}  // namespace obscura::core
+} // namespace obscura::core

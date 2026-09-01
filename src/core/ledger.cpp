@@ -9,7 +9,8 @@
 
 namespace obscura::core {
 
-Ledger::Ledger(std::uint32_t attention_budget) : m_remaining(attention_budget) {}
+Ledger::Ledger(std::uint32_t attention_budget) : m_remaining(attention_budget) {
+}
 
 auto Ledger::append(Entry entry) -> void {
   m_entries.push_back(std::move(entry));
@@ -28,4 +29,4 @@ auto Ledger::spend(std::size_t subject, std::uint32_t cost) -> bool {
   return true;
 }
 
-}  // namespace obscura::core
+} // namespace obscura::core

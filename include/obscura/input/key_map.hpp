@@ -34,8 +34,8 @@ enum class Intent : std::uint8_t {
 // The bound keys, as data. constexpr so the table is available at compile time
 // to anything that wants to generate a key legend from it.
 struct Binding {
-  char             key{};
-  Intent           intent{Intent::Cancel};
+  char key{};
+  Intent intent{Intent::Cancel};
   std::string_view help{};
 };
 
@@ -48,4 +48,4 @@ struct Binding {
 // is total and unambiguous.
 [[nodiscard]] auto bindings() -> std::span<const Binding>;
 
-}  // namespace obscura::input
+} // namespace obscura::input

@@ -26,14 +26,15 @@ using Seed = std::uint64_t;
 
 struct Incident {
   ActorId culprit{kNoActor};
-  RoomId  scene{kNoRoom};
-  Tick    when{0};
+  RoomId scene{kNoRoom};
+  Tick when{0};
 };
 
 // True when every field names something that exists in the given world. The
 // generator below guarantees it; the solver and the authored cases both want to
 // assert it rather than assume it.
-[[nodiscard]] auto is_well_formed(const Incident& incident, const Hull& hull, const Roster& roster) -> bool;
+[[nodiscard]] auto is_well_formed(const Incident& incident, const Hull& hull,
+                                  const Roster& roster) -> bool;
 
 // Deterministic mixing step. SplitMix64: one multiply-xor-shift round, no state
 // beyond the value handed in, so a caller can derive an independent stream per
@@ -45,6 +46,7 @@ struct Incident {
 // and an all-sentinel one when the world has no actors or no rooms — the caller
 // checks is_well_formed rather than being handed something that names a
 // nonexistent culprit.
-[[nodiscard]] auto generate(Seed seed, const Hull& hull, const Roster& roster, Tick horizon) -> Incident;
+[[nodiscard]] auto generate(Seed seed, const Hull& hull, const Roster& roster,
+                            Tick horizon) -> Incident;
 
-}  // namespace obscura::world
+} // namespace obscura::world

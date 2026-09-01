@@ -36,7 +36,7 @@ auto divide(int a, int b) -> std::expected<int, DivError> {
   return a / b;
 }
 
-}  // namespace example
+} // namespace example
 
 using example::DivError;
 using example::divide;

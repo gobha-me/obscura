@@ -39,4 +39,4 @@ inline constexpr CaseData kDerelictAlpha{
     .links = kDerelictAlphaLinks,
 };
 
-}  // namespace obscura::cases::authored
+} // namespace obscura::cases::authored

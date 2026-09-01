@@ -19,12 +19,12 @@
 namespace obscura::replay {
 
 struct Outcome {
-  bool        reproduced{false};
+  bool reproduced{false};
   // Number of steps applied before the run ended. Equal to the recording's step
   // count on success.
   std::size_t steps_applied{0};
-  Digest      expected{0};
-  Digest      actual{0};
+  Digest expected{0};
+  Digest actual{0};
 };
 
 // Replays `recording`, driving a fresh world from its seed.
@@ -34,4 +34,4 @@ struct Outcome {
 // would be a test that cannot fail.
 [[nodiscard]] auto replay(const Recording& recording) -> Outcome;
 
-}  // namespace obscura::replay
+} // namespace obscura::replay

@@ -14,4 +14,4 @@ auto NullSink::play(Cue cue) -> void {
   ++m_count;
 }
 
-}  // namespace obscura::audio
+} // namespace obscura::audio

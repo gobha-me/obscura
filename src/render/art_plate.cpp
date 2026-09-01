@@ -23,4 +23,4 @@ auto hold_d0() -> termforge::EncodedImage {
   };
 }
 
-}  // namespace obscura::render
+} // namespace obscura::render

@@ -13,7 +13,8 @@
 
 namespace obscura::render {
 
-auto blend_line(std::string_view from, std::string_view to, std::uint8_t step) -> std::string {
+auto blend_line(std::string_view from, std::string_view to, std::uint8_t step)
+    -> std::string {
   if (step == 0) {
     return std::string{from};
   }
@@ -48,7 +49,8 @@ auto blend(const Plate& from, const Plate& to, std::uint8_t step) -> Plate {
   static const std::string kEmpty{};
 
   for (std::size_t index = 0; index < height; ++index) {
-    const std::string& lhs = index < from.lines.size() ? from.lines[index] : kEmpty;
+    const std::string& lhs =
+        index < from.lines.size() ? from.lines[index] : kEmpty;
     const std::string& rhs = index < to.lines.size() ? to.lines[index] : kEmpty;
     out.lines.push_back(blend_line(lhs, rhs, step));
   }
@@ -56,4 +58,4 @@ auto blend(const Plate& from, const Plate& to, std::uint8_t step) -> Plate {
   return out;
 }
 
-}  // namespace obscura::render
+} // namespace obscura::render

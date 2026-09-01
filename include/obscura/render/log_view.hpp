@@ -19,13 +19,14 @@
 namespace obscura::render {
 
 // Renders the newest `rows` entries, oldest first, so the caller can print top
-// to bottom and have the newest at the bottom — which is where a terminal reader
-// looks. Fewer than `rows` entries yields a shorter vector, not a padded one;
-// padding is the band's job.
-[[nodiscard]] auto tail(const core::Ledger& ledger, std::size_t rows) -> std::vector<std::string>;
+// to bottom and have the newest at the bottom — which is where a terminal
+// reader looks. Fewer than `rows` entries yields a shorter vector, not a padded
+// one; padding is the band's job.
+[[nodiscard]] auto tail(const core::Ledger& ledger, std::size_t rows)
+    -> std::vector<std::string>;
 
 // One entry, formatted. Split out because it is the part with a decision in it
 // — everything in tail() above is windowing.
 [[nodiscard]] auto format_entry(const core::Entry& entry) -> std::string;
 
-}  // namespace obscura::render
+} // namespace obscura::render

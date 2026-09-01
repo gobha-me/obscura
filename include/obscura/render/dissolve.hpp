@@ -27,10 +27,12 @@ inline constexpr std::uint8_t kDissolveSteps = 5;
 // unchanged; step >= kDissolveSteps is `to` unchanged. Anything between is a
 // per-character mix, so a plate that grows taller does so a line at a time
 // rather than appearing whole.
-[[nodiscard]] auto blend(const Plate& from, const Plate& to, std::uint8_t step) -> Plate;
+[[nodiscard]] auto blend(const Plate& from, const Plate& to, std::uint8_t step)
+    -> Plate;
 
 // The single-line kernel the blend is built from, exposed because it is the
 // part worth testing directly: everything above it is bookkeeping.
-[[nodiscard]] auto blend_line(std::string_view from, std::string_view to, std::uint8_t step) -> std::string;
+[[nodiscard]] auto blend_line(std::string_view from, std::string_view to,
+                              std::uint8_t step) -> std::string;
 
-}  // namespace obscura::render
+} // namespace obscura::render

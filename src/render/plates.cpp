@@ -12,29 +12,27 @@ namespace {
 
 auto kind_label(world::EvidenceKind kind) -> const char* {
   switch (kind) {
-    case world::EvidenceKind::Presence:  return "PRESENCE";
-    case world::EvidenceKind::Absence:   return "ABSENCE";
-    case world::EvidenceKind::Trace:     return "TRACE";
+    case world::EvidenceKind::Presence: return "PRESENCE";
+    case world::EvidenceKind::Absence: return "ABSENCE";
+    case world::EvidenceKind::Trace: return "TRACE";
     case world::EvidenceKind::Testimony: return "TESTIMONY";
   }
   return "TRACE";
 }
 
-}  // namespace
+} // namespace
 
 auto compose(const world::Evidence& item, world::Fidelity level) -> Plate {
   Plate plate{};
 
   switch (level) {
     case world::Fidelity::Hidden:
-      // Nothing at all — not a placeholder. A box reading "[redacted]" tells the
-      // player an item exists, which at this level is information they have not
-      // earned.
+      // Nothing at all — not a placeholder. A box reading "[redacted]" tells
+      // the player an item exists, which at this level is information they have
+      // not earned.
       break;
 
-    case world::Fidelity::Sensed:
-      plate.lines.emplace_back("~~~~~~~~");
-      break;
+    case world::Fidelity::Sensed: plate.lines.emplace_back("~~~~~~~~"); break;
 
     case world::Fidelity::Partial:
       plate.lines.emplace_back(kind_label(item.kind));
@@ -50,4 +48,4 @@ auto compose(const world::Evidence& item, world::Fidelity level) -> Plate {
   return plate;
 }
 
-}  // namespace obscura::render
+} // namespace obscura::render

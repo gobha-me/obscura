@@ -3,9 +3,9 @@
 // The audio sink interface, and the implementation that does nothing.
 //
 // What belongs here: the cue vocabulary and the one virtual call that plays it.
-// A sink is deliberately fire-and-forget — the game says "a plate resolved", not
-// "play resolve.wav at 40% for 300ms". Anything that would make audio depend on
-// a mixer's state belongs behind a concrete sink, not in this header.
+// A sink is deliberately fire-and-forget — the game says "a plate resolved",
+// not "play resolve.wav at 40% for 300ms". Anything that would make audio
+// depend on a mixer's state belongs behind a concrete sink, not in this header.
 //
 // NullSink is not a placeholder to be replaced later. It is the default, and it
 // is what every test runs against: a headless CI box has no audio device, and a
@@ -20,22 +20,22 @@ namespace obscura::audio {
 // decides what that sounds like, so swapping a sound pack touches one
 // implementation rather than every call site.
 enum class Cue : std::uint8_t {
-  Resolve,   // a plate gained fidelity
-  Deny,      // an action was refused (no attention left, illegal move)
-  Arm,       // the commit gesture armed
-  Commit,    // an accusation fired
-  Verdict,   // the run resolved
+  Resolve, // a plate gained fidelity
+  Deny,    // an action was refused (no attention left, illegal move)
+  Arm,     // the commit gesture armed
+  Commit,  // an accusation fired
+  Verdict, // the run resolved
 };
 
 class Sink {
  public:
-  Sink()          = default;
+  Sink() = default;
   virtual ~Sink() = default;
 
-  Sink(const Sink&)                    = delete;
+  Sink(const Sink&) = delete;
   auto operator=(const Sink&) -> Sink& = delete;
-  Sink(Sink&&)                         = delete;
-  auto operator=(Sink&&) -> Sink&      = delete;
+  Sink(Sink&&) = delete;
+  auto operator=(Sink&&) -> Sink& = delete;
 
   // Non-blocking by contract. A sink that needs to do work owns its own thread;
   // this is called from the render loop, where a stall is a dropped frame.
@@ -53,7 +53,7 @@ class NullSink final : public Sink {
 
  private:
   std::uint32_t m_count{0};
-  Cue           m_last{Cue::Resolve};
+  Cue m_last{Cue::Resolve};
 };
 
-}  // namespace obscura::audio
+} // namespace obscura::audio

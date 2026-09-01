@@ -28,14 +28,17 @@ struct Solution {
   // Every actor not excluded by the evidence, in ascending id order.
   std::vector<ActorId> candidates{};
 
-  [[nodiscard]] auto is_unique() const -> bool { return candidates.size() == 1; }
+  [[nodiscard]] auto is_unique() const -> bool {
+    return candidates.size() == 1;
+  }
   [[nodiscard]] auto is_broken() const -> bool { return candidates.empty(); }
 };
 
 // Eliminative, not constructive: start from every actor and strike out the ones
 // some item rules out. That order matters — it makes "no candidate survived" a
-// distinguishable outcome from "the search gave up", so a broken case reports as
-// broken instead of as unsolved.
-[[nodiscard]] auto solve(const Hull& hull, const Roster& roster, const EvidenceSet& evidence) -> Solution;
+// distinguishable outcome from "the search gave up", so a broken case reports
+// as broken instead of as unsolved.
+[[nodiscard]] auto solve(const Hull& hull, const Roster& roster,
+                         const EvidenceSet& evidence) -> Solution;
 
-}  // namespace obscura::world
+} // namespace obscura::world

@@ -31,9 +31,10 @@ auto replay(const Recording& recording) -> Outcome {
     return outcome;
   }
 
-  const cases::World world    = cases::build(catalogue[recording.case_index]);
-  const world::Incident truth = world::generate(
-      recording.seed, world.hull, world.roster, catalogue[recording.case_index].horizon);
+  const cases::World world = cases::build(catalogue[recording.case_index]);
+  const world::Incident truth =
+      world::generate(recording.seed, world.hull, world.roster,
+                      catalogue[recording.case_index].horizon);
 
   // The steps are counted, not yet interpreted: applying an Intent needs the
   // run rules, which do not exist yet. Counting them keeps the Outcome honest
@@ -46,9 +47,9 @@ auto replay(const Recording& recording) -> Outcome {
   // Hashing the evidence set rather than the incident alone: the incident is
   // three integers straight out of the seed, so a digest over it would pass
   // even if every derivation downstream had broken.
-  outcome.actual     = hash(world::derive(world.hull, world.roster, truth));
+  outcome.actual = hash(world::derive(world.hull, world.roster, truth));
   outcome.reproduced = outcome.actual == outcome.expected;
   return outcome;
 }
 
-}  // namespace obscura::replay
+} // namespace obscura::replay

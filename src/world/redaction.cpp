@@ -14,7 +14,9 @@
 
 namespace obscura::world {
 
-RedactionMask::RedactionMask(std::size_t item_count) : m_levels(item_count, Fidelity::Hidden) {}
+RedactionMask::RedactionMask(std::size_t item_count)
+    : m_levels(item_count, Fidelity::Hidden) {
+}
 
 auto RedactionMask::size() const -> std::size_t {
   return m_levels.size();
@@ -38,10 +40,12 @@ auto RedactionMask::raise(std::size_t index, Fidelity to) -> bool {
 auto RedactionMask::fully_resolved() const -> bool {
   // Vacuously true for an empty mask, which is the honest answer: there is
   // nothing left redacted.
-  return std::ranges::all_of(m_levels, [](Fidelity level) { return level == Fidelity::Full; });
+  return std::ranges::all_of(
+      m_levels, [](Fidelity level) { return level == Fidelity::Full; });
 }
 
-auto project(const EvidenceSet& complete, const RedactionMask& mask) -> EvidenceSet {
+auto project(const EvidenceSet& complete, const RedactionMask& mask)
+    -> EvidenceSet {
   EvidenceSet visible{};
   visible.reserve(complete.size());
 
@@ -60,8 +64,8 @@ auto project(const EvidenceSet& complete, const RedactionMask& mask) -> Evidence
       item.when = 0;
     }
     if (level < Fidelity::Partial) {
-      item.kind    = EvidenceKind::Trace;
-      item.where   = kNoRoom;
+      item.kind = EvidenceKind::Trace;
+      item.where = kNoRoom;
       item.subject = kNoActor;
       item.label.clear();
     }
@@ -72,4 +76,4 @@ auto project(const EvidenceSet& complete, const RedactionMask& mask) -> Evidence
   return visible;
 }
 
-}  // namespace obscura::world
+} // namespace obscura::world
