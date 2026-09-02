@@ -42,9 +42,8 @@ auto snapshot(const Screen& screen) -> std::vector<CellSnapshot> {
   result.reserve(static_cast<std::size_t>(screen.cols() * screen.rows()));
   for (int row = 0; row < screen.rows(); ++row) {
     for (int column = 0; column < screen.cols(); ++column) {
-      result.push_back(
-          {.cell = screen.at(column, row),
-           .text = std::string{screen.text_at(column, row)}});
+      result.push_back({.cell = screen.at(column, row),
+                        .text = std::string{screen.text_at(column, row)}});
     }
   }
   return result;
@@ -81,8 +80,8 @@ auto logical_hash(const Screen& screen, const termforge::Rect& viewport)
   std::uint64_t hash = kOffset;
   for (int row = 0; row < viewport.h; ++row) {
     for (int column = 0; column < viewport.w; ++column) {
-      for (const unsigned char byte : screen.text_at(viewport.x + column,
-                                                     viewport.y + row)) {
+      for (const unsigned char byte :
+           screen.text_at(viewport.x + column, viewport.y + row)) {
         hash ^= byte;
         hash *= kPrime;
       }
@@ -136,8 +135,7 @@ TEST_CASE("SHIP refuses invalid inputs without changing the screen",
   SECTION("invalid cursor") {
     Screen screen = marked_screen();
     const auto before = snapshot(screen);
-    CHECK(obscura::render::draw_ship(
-              screen, valid, 1, obscura::world::ROOM_ANY)
+    CHECK(obscura::render::draw_ship(screen, valid, 1, obscura::world::ROOM_ANY)
               .status == ShipRenderStatus::invalid_cursor);
     CHECK(snapshot(screen) == before);
   }
@@ -229,11 +227,11 @@ TEST_CASE("SHIP refuses invalid inputs without changing the screen",
 TEST_CASE("SHIP accepts all fifteen canonical slots", "[render][ship][cap]") {
   Hull hull{};
   RoomId previous = obscura::world::ROOM_ANY;
-  for (const std::uint16_t row : {std::uint16_t{0}, std::uint16_t{11},
-                                  std::uint16_t{22}}) {
-    for (const std::uint16_t column : {std::uint16_t{0}, std::uint16_t{24},
-                                       std::uint16_t{48}, std::uint16_t{72},
-                                       std::uint16_t{96}}) {
+  for (const std::uint16_t row :
+       {std::uint16_t{0}, std::uint16_t{11}, std::uint16_t{22}}) {
+    for (const std::uint16_t column :
+         {std::uint16_t{0}, std::uint16_t{24}, std::uint16_t{48},
+          std::uint16_t{72}, std::uint16_t{96}}) {
       const RoomId room = add_room(hull, column, row);
       REQUIRE(room != obscura::world::ROOM_ANY);
       if (previous != obscura::world::ROOM_ANY) {
@@ -260,8 +258,8 @@ TEST_CASE("Cold Lantern matches the normative 120 by 40 grid",
           "[render][ship][golden]") {
   const Hull hull = cold_lantern();
   Screen screen{120, 40};
-  const auto result = obscura::render::draw_ship(screen, hull,
-                                                 0xC01D'1A47ULL, 7);
+  const auto result =
+      obscura::render::draw_ship(screen, hull, 0xC01D'1A47ULL, 7);
   REQUIRE(result.status == ShipRenderStatus::drawn);
   CHECK(result.viewport == termforge::Rect{.x = 0, .y = 0, .w = 120, .h = 40});
 

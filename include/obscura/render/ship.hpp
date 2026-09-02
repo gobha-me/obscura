@@ -40,8 +40,8 @@ struct ShipRenderResult {
 // refusal leaves `screen` byte-for-byte untouched and returns an empty
 // viewport. Surveyed and resolved rooms deliberately remain unsupported until
 // their projection contract lands.
-[[nodiscard]] auto draw_ship(termforge::Screen& screen,
-                             const world::Hull& hull, std::uint64_t seed,
-                             world::RoomId cursor) -> ShipRenderResult;
+[[nodiscard]] auto draw_ship(termforge::Screen& screen, const world::Hull& hull,
+                             std::uint64_t seed, world::RoomId cursor)
+    -> ShipRenderResult;
 
 } // namespace obscura::render

@@ -57,10 +57,10 @@ auto slot_of(const world::CellRect& bounds) -> std::optional<std::size_t> {
   return (*row * kRoomColumns.size()) + *column;
 }
 
-auto edge_is_drawable(const world::CellRect& lhs,
-                      const world::CellRect& rhs) -> bool {
-  const auto column_difference = lhs.col > rhs.col ? lhs.col - rhs.col
-                                                    : rhs.col - lhs.col;
+auto edge_is_drawable(const world::CellRect& lhs, const world::CellRect& rhs)
+    -> bool {
+  const auto column_difference =
+      lhs.col > rhs.col ? lhs.col - rhs.col : rhs.col - lhs.col;
   const auto row_difference =
       lhs.row > rhs.row ? lhs.row - rhs.row : rhs.row - lhs.row;
   return (lhs.row == rhs.row && column_difference == 24) ||
