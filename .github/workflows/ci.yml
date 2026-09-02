@@ -72,14 +72,14 @@ jobs:
       fail-fast: false      # always show every compiler's result, not just the first failure
       matrix:
         include:
-          - { name: "gcc / default",   cxx: g++,     toolchain: default.cmake,   build_type: Debug }
-          - { name: "gcc / asan",      cxx: g++,     toolchain: address.cmake,   build_type: Debug }
-          - { name: "gcc / tsan",      cxx: g++,     toolchain: thread.cmake,    build_type: RelWithDebInfo }
-          - { name: "gcc / ubsan",     cxx: g++,     toolchain: undefined.cmake, build_type: Debug }
-          - { name: "clang / default", cxx: clang++, toolchain: clang.cmake,     build_type: Debug }
-          - { name: "clang / asan",    cxx: clang++, toolchain: address.cmake,   build_type: Debug }
-          - { name: "clang / tsan",    cxx: clang++, toolchain: thread.cmake,    build_type: RelWithDebInfo }
-          - { name: "clang / ubsan",   cxx: clang++, toolchain: undefined.cmake, build_type: Debug }
+          - { name: "gcc / default",   cxx: g++,     preset: default }
+          - { name: "gcc / asan",      cxx: g++,     preset: asan }
+          - { name: "gcc / tsan",      cxx: g++,     preset: tsan }
+          - { name: "gcc / ubsan",     cxx: g++,     preset: ubsan }
+          - { name: "clang / default", cxx: clang++, preset: clang }
+          - { name: "clang / asan",    cxx: clang++, preset: asan }
+          - { name: "clang / tsan",    cxx: clang++, preset: tsan }
+          - { name: "clang / ubsan",   cxx: clang++, preset: ubsan }
     steps:
       - uses: actions/checkout@v4
         with:
@@ -107,10 +107,7 @@ jobs:
       - name: Configure
         env:
           CXX: ${{ matrix.cxx }}   # default/sanitizer toolchains respect $CXX; clang.cmake selects clang itself
-        run: >
-          cmake -B build
-          -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/${{ matrix.toolchain }}
-          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        run: cmake --preset "${{ matrix.preset }}"
 
       # --parallel 2, not bare --parallel. This is a deliberate deviation from
       # cpp-template's "copy ci.yml verbatim" rule, and it is load-bearing here:
@@ -119,17 +116,18 @@ jobs:
       # exhaust the runner. It fails as "The runner has received a shutdown
       # signal" / exit 143 partway through Catch2 — which reads like flaky
       # infrastructure rather than resource exhaustion, and cost an afternoon to
-      # attribute. Clang survives it; GCC does not.
+      # attribute. Clang survives it; GCC does not. The build presets carry this
+      # limit so local and CI invocations exercise the same resource contract.
       #
       # The template does not hit this because it fetches only Catch2. OBSCURA
       # adds TermForge, which roughly doubles the compile load.
       - name: Build
-        run: cmake --build build --parallel 2
+        run: cmake --build --preset "${{ matrix.preset }}"
 
       - name: Test
         # Runs the Catch2 suites, the sanitizer engagement smoke test, and the
         # CT-05 version-parse-selftest.
-        run: ctest --test-dir build --output-on-failure
+        run: ctest --preset "${{ matrix.preset }}"
 
   # The library-disabled path, which the matrix above never exercises: every job
   # there builds with the library ON, so nothing would catch a regression in the

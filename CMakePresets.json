@@ -1,0 +1,210 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 28,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "configure-base",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/build/presets/${presetName}"
+    },
+    {
+      "name": "default",
+      "displayName": "Default debug",
+      "description": "Debug build using the compiler selected by CXX or the platform default",
+      "inherits": "configure-base",
+      "toolchainFile": "${sourceDir}/cmake/toolchain/default.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "clang",
+      "displayName": "Clang debug",
+      "description": "Debug build using the opt-in Clang toolchain",
+      "inherits": "configure-base",
+      "toolchainFile": "${sourceDir}/cmake/toolchain/clang.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "asan",
+      "displayName": "AddressSanitizer",
+      "description": "Debug build with AddressSanitizer using the compiler selected by CXX",
+      "inherits": "configure-base",
+      "toolchainFile": "${sourceDir}/cmake/toolchain/address.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "tsan",
+      "displayName": "ThreadSanitizer",
+      "description": "RelWithDebInfo build with ThreadSanitizer using the compiler selected by CXX",
+      "inherits": "configure-base",
+      "toolchainFile": "${sourceDir}/cmake/toolchain/thread.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
+      "name": "ubsan",
+      "displayName": "UndefinedBehaviorSanitizer",
+      "description": "Debug build with UndefinedBehaviorSanitizer using the compiler selected by CXX",
+      "inherits": "configure-base",
+      "toolchainFile": "${sourceDir}/cmake/toolchain/undefined.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Release",
+      "description": "Optimized build using the compiler selected by CXX or the platform default",
+      "inherits": "configure-base",
+      "toolchainFile": "${sourceDir}/cmake/toolchain/default.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "build-base",
+      "hidden": true,
+      "jobs": 2
+    },
+    {
+      "name": "default",
+      "inherits": "build-base",
+      "configurePreset": "default"
+    },
+    {
+      "name": "clang",
+      "inherits": "build-base",
+      "configurePreset": "clang"
+    },
+    {
+      "name": "asan",
+      "inherits": "build-base",
+      "configurePreset": "asan"
+    },
+    {
+      "name": "tsan",
+      "inherits": "build-base",
+      "configurePreset": "tsan"
+    },
+    {
+      "name": "ubsan",
+      "inherits": "build-base",
+      "configurePreset": "ubsan"
+    },
+    {
+      "name": "release",
+      "inherits": "build-base",
+      "configurePreset": "release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "test-base",
+      "hidden": true,
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "jobs": 1
+      }
+    },
+    {
+      "name": "default",
+      "inherits": "test-base",
+      "configurePreset": "default"
+    },
+    {
+      "name": "clang",
+      "inherits": "test-base",
+      "configurePreset": "clang"
+    },
+    {
+      "name": "asan",
+      "inherits": "test-base",
+      "configurePreset": "asan"
+    },
+    {
+      "name": "tsan",
+      "inherits": "test-base",
+      "configurePreset": "tsan"
+    },
+    {
+      "name": "ubsan",
+      "inherits": "test-base",
+      "configurePreset": "ubsan"
+    },
+    {
+      "name": "release",
+      "inherits": "test-base",
+      "configurePreset": "release"
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "default",
+      "displayName": "Configure, build, and test the default debug build",
+      "steps": [
+        { "type": "configure", "name": "default" },
+        { "type": "build", "name": "default" },
+        { "type": "test", "name": "default" }
+      ]
+    },
+    {
+      "name": "clang",
+      "displayName": "Configure, build, and test the Clang debug build",
+      "steps": [
+        { "type": "configure", "name": "clang" },
+        { "type": "build", "name": "clang" },
+        { "type": "test", "name": "clang" }
+      ]
+    },
+    {
+      "name": "asan",
+      "displayName": "Configure, build, and test with AddressSanitizer",
+      "steps": [
+        { "type": "configure", "name": "asan" },
+        { "type": "build", "name": "asan" },
+        { "type": "test", "name": "asan" }
+      ]
+    },
+    {
+      "name": "tsan",
+      "displayName": "Configure, build, and test with ThreadSanitizer",
+      "steps": [
+        { "type": "configure", "name": "tsan" },
+        { "type": "build", "name": "tsan" },
+        { "type": "test", "name": "tsan" }
+      ]
+    },
+    {
+      "name": "ubsan",
+      "displayName": "Configure, build, and test with UndefinedBehaviorSanitizer",
+      "steps": [
+        { "type": "configure", "name": "ubsan" },
+        { "type": "build", "name": "ubsan" },
+        { "type": "test", "name": "ubsan" }
+      ]
+    },
+    {
+      "name": "release",
+      "displayName": "Configure, build, and test the release build",
+      "steps": [
+        { "type": "configure", "name": "release" },
+        { "type": "build", "name": "release" },
+        { "type": "test", "name": "release" }
+      ]
+    }
+  ]
+}

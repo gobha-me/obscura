@@ -66,6 +66,10 @@ what the item is.
 - **Compiler respects the environment** by default. Do **not** re-introduce a
   forced compiler in `cmake/toolchain/default.cmake`. Prefer clang? That's what
   `cmake/toolchain/clang.cmake` is for (opt-in, like the sanitizer toolchains).
+- **Shared CMake presets mirror the supported matrix.** `default`, `clang`,
+  `asan`, `tsan`, `ubsan`, and `release` each configure, build with at most two
+  workers, and test. The default, sanitizer, and release presets respect `CXX`;
+  `clang` selects the opt-in Clang toolchain.
 - Dependencies: `find_package` first, `FetchContent` fallback, **100% CMake**
   (no conan/vcpkg). Keep it that way unless the maintainer asks.
 - **Deps are opt-in via a list, not the filesystem.** A recipe in `cmake/deps/`
@@ -172,15 +176,13 @@ forever and says nothing.
 ## How to verify a change (do this before opening a PR)
 
 ```bash
-cmake -B build && cmake --build build && ctest --test-dir build --output-on-failure
-# and cross-compiler, because both are supported and CI enforces it:
-cmake -B build-clang -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/clang.cmake \
-  && cmake --build build-clang && ctest --test-dir build-clang
+CXX=g++-13 cmake --workflow --preset default
+cmake --workflow --preset clang
 
 # and, for anything touching install/export or the dependency recipes, the path
 # no ctest covers — every test runs with this repo as the top-level project.
 # One compiler is enough: it fails during generation, if it fails.
-cmake --install build --prefix /tmp/obscura-prefix
+cmake --install build/presets/default --prefix /tmp/obscura-prefix
 # then configure a scratch project with
 #   find_package(obscura CONFIG REQUIRED)
 #   target_link_libraries(app PRIVATE obscura::lib)

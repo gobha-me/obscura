@@ -13,6 +13,8 @@ include/version.hpp
 # clangd's index dir, written at the root of whatever tree you open (.clangd is
 # committed, so this appears for anyone using a clangd-backed editor).
 /.cache/
+# CMake's shared presets are committed; per-machine overrides are not.
+/CMakeUserPresets.json
 
 # Prerequisites
 *.d
