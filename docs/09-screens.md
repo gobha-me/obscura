@@ -42,19 +42,27 @@ renderer, deliberately.
 ## The three resolution states, 22 × 9 each
 ```
    UNKNOWN                  SURVEYED                  RESOLVED
-   ░▒▓▒░░▓▒░▒▓░░▒▒▓░▒░▓▒    ┌─[ HOLD 1 ]───DMG───┐    ╔═[ HOLD 1 ]═════════╗
-   ▒░▓▒░░▒▓░▒▒░▓▒░░▓▒░▒▓    │▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒│    ║▓▒░░▒▓█▓▒░▒▓▓▒░▒▓▒░▒║
-   ▓░▒ H?LD ?1 ▒░▓▒░░▒▓░    │▒▒▒◆▒▒▒▒▒▒▒▒▒▒▒◆▒▒▒▒│    ║▒░▒▓██▓▒▒░░▒▓█▓▒░▒▓▒║
-   ░▒▓▒░▒▓░░▒▓▒░▒░▓▒▒░░▓    │▒▒┌────────────┐▒▒▒▒│    ║░▒▓█▓▒░▒▓▓▒░▒▓█▓▒░▒▓║
-   ▒▓░▒░▒▓▓░▒░░▓▒░▒▓░▒░▒    │▒▒│ ▚▚ 3 EVID ▚│▒▒▒▒│    ║▒▓▓▒░░▒▓█▓▒▒░▒▓▒░░▒▒║
-   ░▒▓░▒░▒▓▒░░▒▓▒░▓░▒▒▓░    │▒▒└────────────┘▒▒▒▒│    ║▓▒░▒▓▓▒░▒▓█▓▒░▒▓▒░▓▓║
-   ▓▒░░▒▓░▒░▓▒▒░░▓▒░▒▓░▒    │▒▒▒▒▒▒▒◆▒▒▒▒▒▒▒▒▒▒▒▒│    ║▒░░▒▒▓▓▒░░▒▓▒░▒▒▓▓▒░║
-   ░▒▓░▒░▓▒░░▒▓▒░▒▓░░▒▒▓    │▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒│    ║▓▓▒▒░░░▒▒▓▓▓▒▒░░▒▒▓▓║
+   ░▒▓▒░░▓▒░▒▓░░▒▒▓░▒░▓▒    ┌─[ HOLD 1 ]─────DMG─┐    ╔═[ HOLD 1 ]═════════╗
+   ▒░▓▒░░▒▓░▒▒░▓▒░░▓▒░▒▓    │                    │    ║▓▒░░▒▓█▓▒░▒▓▓▒░▒▓▒░▒║
+   ▓░▒ H?LD ?1 ▒░▓▒░░▒▓░    │   ◇            ◆   │    ║▒░▒▓██▓▒▒░░▒▓█▓▒░▒▓▒║
+   ░▒▓▒░▒▓░░▒▓▒░▒░▓▒▒░░▓    │ ┌────────────────┐ │    ║░▒▓█▓▒░▒▓▓▒░▒▓█▓▒░▒▓║
+   ▒▓░▒░▒▓▓░▒░░▓▒░▒▓░▒░▒    │ │3 EVID · 1 LOCK │ │    ║▒▓▓▒░░▒▓█▓▒▒░▒▓▒░░▒▒║
+   ░▒▓░▒░▒▓▒░░▒▓▒░▓░▒▒▓░    │ └────────────────┘ │    ║▓▒░▒▓▓▒░▒▓█▓▒░▒▓▒░▓▓║
+   ▓▒░░▒▓░▒░▓▒▒░░▓▒░▒▓░▒    │      ◆             │    ║▒░░▒▒▓▓▒░░▒▓▒░▒▒▓▓▒░║
+   ░▒▓░▒░▓▒░░▒▓▒░▒▓░░▒▒▓    │                    │    ║▓▓▒▒░░░▒▒▓▓▓▒▒░░▒▒▓▓║
    ▒▓░▒░▓▒░▒▒▓░░▒▓▒░▓░▒▒    └────────────────────┘    ╚════════════════════╝
    glyph band only           glyph + tint bands        hull frame + plate interior
-   no image placement        ▒ = damage tint in the     glyph noise cleared; room
-   fragments almost legible  cell background, not text  label remains glyph text
+   no image placement        blank cells carry tint;    glyph noise cleared; room
+   fragments almost legible  no image is re-emitted     label remains glyph text
 ```
+
+Surveyed rooms use background tints `#0e181d` (intact), `#2a1b08` (damaged),
+and `#2a0b10` (breached). Evidence markers are ordered by stable evidence ID and
+use `◆` when the current loadout can open the item or amber `◇` when a required
+instrument is missing. The central summary always gives the evidence count and
+adds the locked count when non-zero. A room supports at most four markers; the
+renderer rejects a larger projection before painting rather than silently
+hiding evidence.
 
 The resolved frame is `Layer::hull`, not plate pixels. The 240×160 canonical
 interior plate is placed with `PlacementFit::Stretch` into the fixed 20×7-cell
