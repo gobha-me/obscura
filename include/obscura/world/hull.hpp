@@ -14,6 +14,8 @@
 // seed alone, or replay/ and the case solver are both lying.
 
 #include <cstddef>
+#include <cstdint>
+#include <optional>
 #include <vector>
 
 #include <obscura/world/model.hpp>
@@ -45,6 +47,11 @@ class Hull {
   auto connect(RoomId lhs, RoomId rhs) -> void;
 
   [[nodiscard]] auto adjacent(RoomId lhs, RoomId rhs) const -> bool;
+
+  // The shortest number of connections between two rooms. Empty means either
+  // identity is invalid or the rooms belong to disconnected components.
+  [[nodiscard]] auto distance(RoomId from, RoomId to) const
+      -> std::optional<std::uint16_t>;
 
   // Empty when `id` is out of range, so a caller can iterate without a bounds
   // check of its own.
