@@ -23,7 +23,7 @@ T-G1 (`AudioSink` interface + `NullSink`, stdlib-only).
 ### Repo and gates
 - [ ] Repo per spec §2.4. `CLAUDE.md` from this bundle at the root.
 - [ ] CMake: C++23, FetchContent termforge + Catch2 v3, presets for
-      default / clang / asan / ubsan / release.
+      default / clang / asan / tsan / ubsan / release.
 - [ ] `tools/lint/sim_purity.sh` wired as a CTest case **before** `src/world/`
       has content. It is cheap to satisfy from day one and expensive to retrofit.
 - [ ] Refuse-to-start contract (spec §2.3): Kitty graphics with below-background

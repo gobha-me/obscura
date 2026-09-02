@@ -73,16 +73,20 @@ build-system conventions inherited from it are documented below and in
 **Configure, build, test — and picking a toolchain**
 
 ```bash
-cmake -B build                                                            # $CXX, C++23, Debug
-cmake -B build-clang -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/clang.cmake   # clang
-CXX=clang++ cmake -B build-asan -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/address.cmake
-
-cmake --build build --parallel
-ctest --test-dir build --output-on-failure
+cmake --workflow --preset default   # $CXX (or the platform default), Debug
+cmake --workflow --preset clang     # opt-in Clang, Debug
+cmake --workflow --preset asan      # $CXX + AddressSanitizer
+cmake --workflow --preset tsan      # $CXX + ThreadSanitizer
+cmake --workflow --preset ubsan     # $CXX + UndefinedBehaviorSanitizer
+cmake --workflow --preset release   # $CXX (or the platform default), Release
 ```
 
-Run these from the repo root — the toolchain paths are relative. You cannot pass
-two toolchain files, so a sanitizer composes with clang via `CXX=`, as above.
+Each workflow configures, builds with at most two workers, and runs tests with
+failure output. Its build tree is `build/presets/<name>`. The default, sanitizer,
+and release presets respect `CXX` at their first configuration, so a Clang ASan
+run is `CXX=clang++-20 cmake --workflow --preset asan`; remove that preset's
+build tree before changing its compiler. The `clang` preset selects the existing
+opt-in Clang toolchain directly.
 
 **Add a dependency**
 
@@ -112,11 +116,12 @@ of the case: TermForge is linked into `obscura_lib`, so it needs both lines.
 ```bash
 mkdir test/40myfeature
 $EDITOR test/40myfeature/test.cpp    # TEST_CASEs only — test/main.cpp provides main()
-cmake -B build && cmake --build build --parallel && ctest --test-dir build
+cmake --workflow --preset default
 ```
 
-It becomes the target and ctest name `40myfeature-test`. **Re-run `cmake -B`
-after adding a directory** — discovery is a configure-time glob. The numeric
+It becomes the target and ctest name `40myfeature-test`. **Re-run
+`cmake --preset default` after adding a directory** — discovery is a
+configure-time glob. The numeric
 prefix only sorts that glob; it does not order the run. The target links Catch2
 and, when the library target exists, `obscura::lib` — so
 `#include <obscura/obscura.hpp>` and call into the game directly, with nothing to

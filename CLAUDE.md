@@ -93,9 +93,8 @@ Driver-facing tests are offline against an in-memory sink — no live TTY.
 
 ## Verify before every commit
 ```
-cmake -B build && cmake --build build && ctest --test-dir build --output-on-failure
-cmake -B build-clang -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/clang.cmake \
-  && cmake --build build-clang && ctest --test-dir build-clang
+CXX=g++-13 cmake --workflow --preset default
+cmake --workflow --preset clang
 ```
 The determinism corpus must produce identical hashes across both, at -O0 and -O2,
 and under ASan/UBSan. A divergence is undefined behaviour — chase it immediately.
