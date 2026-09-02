@@ -32,6 +32,7 @@
 #include <obscura/input/key_map.hpp>
 #include <obscura/render/bands.hpp>
 #include <obscura/render/dissolve.hpp>
+#include <obscura/render/glyph_substrate.hpp>
 #include <obscura/render/log_view.hpp>
 #include <obscura/render/plates.hpp>
 #include <obscura/replay/player.hpp>
