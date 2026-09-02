@@ -35,6 +35,11 @@ class Hull {
   // sequence from 0.
   auto add_room() -> RoomId;
 
+  // Adds authored metadata for the next dense id. Adjacency is deliberately
+  // ignored here and remains owned by connect(), which keeps it sorted and
+  // duplicate-free. A non-dense id is refused.
+  auto add_room(Compartment room) -> RoomId;
+
   // Records a two-way connection. Ignores an edge to a room that does not
   // exist, and ignores a duplicate.
   auto connect(RoomId lhs, RoomId rhs) -> void;

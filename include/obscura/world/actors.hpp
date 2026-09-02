@@ -30,6 +30,10 @@ class Roster {
 
   auto add(RoomId start) -> ActorId;
 
+  // Adds a complete authored actor at the next dense id. Empty timelines and
+  // non-dense ids are refused rather than repaired.
+  auto add(Actor actor) -> ActorId;
+
   // kNoRoom for an unknown actor, so callers can compare rather than branch on
   // a separate "exists" query.
   [[nodiscard]] auto room_of(ActorId id) const -> RoomId;
