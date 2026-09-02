@@ -105,6 +105,16 @@ if (${PROJECT_NAME}_BUILD_LIB)
     6069
   )
 
+  # The evidence image is an intentionally small terminal asset, not its
+  # multi-megabyte authoring master. Pin the committed byte count so a visual
+  # replacement cannot silently change compile memory or first-view traffic.
+  obscura_embed_asset(
+    ${PROJECT_SOURCE_DIR}/assets/evidence/e02-manifest-seal.png
+    kE02ManifestSealPng
+    ${PROJECT_BINARY_DIR}/generated/obscura/render/e02_manifest_seal.hpp
+    17353
+  )
+
   # PRIVATE, and that is load-bearing twice over.
   #
   # A build-tree absolute path in a PUBLIC include directory makes

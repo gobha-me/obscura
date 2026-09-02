@@ -97,6 +97,15 @@ this, tmux-first. **Build it in M1.** A recovered manifest with the cargo-seal
 photograph sitting inside the paragraph and scrolling with it is the screenshot
 that sells the project.
 
+The M1 asset is Case 001's E02 manifest seal, embedded from
+`assets/evidence/e02-manifest-seal.png` and placed as a 16 × 3-cell document
+block. Placeholder placements cannot crop without changing the image, so LOG
+scroll offsets treat image blocks as atomic: surrounding text advances one row
+at a time and a boundary step skips across all three image rows. The payload
+stays pinned while off-screen; returning to it emits placement cells but not the
+PNG again. If quota pressure evicts it, that is a presentation event and never
+an entry in the run ledger or replay.
+
 ## AIM — 72 × 20 at (24,10), on `Layer::overlay`
 ```
         ┌─[ ASSERT ]──────────────────────────── slot 3 of 3 ──┐

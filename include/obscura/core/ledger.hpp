@@ -21,6 +21,8 @@ namespace obscura::core {
 
 enum class EntryKind : std::uint8_t {
   Spend,   // attention was spent on an evidence index
+  Examine, // evidence entered the permanent evidence log
+  Reread,  // already-logged evidence was opened again
   Resolve, // an item's fidelity rose
   Note,    // the player wrote something down
   Accuse,  // an accusation was committed
@@ -31,6 +33,20 @@ struct Entry {
   std::size_t subject{
       0}; // an evidence index for Spend/Resolve, an actor id for Accuse
   std::string text{};
+  std::int32_t charge_delta{0};
+  std::uint32_t remaining{0};
+};
+
+enum class EvidenceReadStatus : std::uint8_t {
+  examined,
+  reread,
+  insufficient_charge,
+};
+
+struct EvidenceReadResult {
+  EvidenceReadStatus status{EvidenceReadStatus::insufficient_charge};
+  std::uint32_t cost{0};
+  std::uint32_t remaining{0};
 };
 
 class Ledger {
@@ -46,6 +62,10 @@ class Ledger {
   // the budget cannot cover it — a partial spend would leave the ledger and the
   // budget disagreeing, and the ledger is the one replay trusts.
   auto spend(std::size_t subject, std::uint32_t cost) -> bool;
+
+  // First access permanently adds the item to the evidence log; later access
+  // is a distinct re-read action. Both are atomic with their charge entry.
+  [[nodiscard]] auto read_evidence(std::size_t subject) -> EvidenceReadResult;
 
   [[nodiscard]] auto remaining() const -> std::uint32_t { return m_remaining; }
 
