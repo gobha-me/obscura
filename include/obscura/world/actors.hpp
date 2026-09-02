@@ -12,22 +12,12 @@
 // carries around.
 
 #include <cstddef>
-#include <cstdint>
 #include <vector>
 
 #include <obscura/world/hull.hpp>
+#include <obscura/world/model.hpp>
 
 namespace obscura::world {
-
-using ActorId = std::uint16_t;
-using Tick = std::uint32_t;
-
-inline constexpr ActorId kNoActor = static_cast<ActorId>(0xFFFF);
-
-struct Actor {
-  ActorId id{kNoActor};
-  RoomId room{kNoRoom};
-};
 
 // The crew, indexed by ActorId. A vector for the same determinism reason the
 // hull is one: position in the roster is the tie-break for every rule that has

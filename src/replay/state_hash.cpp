@@ -7,9 +7,10 @@
 #include <cstdint>
 
 #include <obscura/core/ledger.hpp>
-#include <obscura/world/evidence.hpp>
 #include <obscura/world/incident.hpp>
+#include <obscura/world/model.hpp>
 #include <obscura/world/redaction.hpp>
+#include <obscura/world/truth.hpp>
 
 namespace obscura::replay {
 
@@ -52,17 +53,19 @@ auto hash(const world::EvidenceSet& evidence) -> Digest {
   digest = update_u64(digest, evidence.size());
 
   for (const world::Evidence& item : evidence) {
+    digest = update_u64(digest, item.id);
+    digest = update_u64(digest, item.location);
     digest = update(digest, static_cast<std::uint8_t>(item.kind));
-    digest = update_u64(digest, item.subject);
-    digest = update_u64(digest, item.where);
-    digest = update_u64(digest, item.when);
-    // The label is included: it is authored text, so it is part of what a case
-    // asserts. A label that changed between two runs of the same seed means the
-    // case data changed underneath the replay.
-    digest = update_u64(digest, item.label.size());
-    for (const char character : item.label) {
-      digest = update(digest, static_cast<std::uint8_t>(character));
+    digest = update_u64(digest, item.asserts.size());
+    for (const world::Fact& fact : item.asserts) {
+      digest = update_u64(digest, fact.actor);
+      digest = update_u64(digest, fact.when);
+      digest = update_u64(digest, fact.where);
+      digest = update(digest, static_cast<std::uint8_t>(fact.what));
     }
+    digest = update(digest, static_cast<std::uint8_t>(item.veracity));
+    digest = update(digest, item.requires_);
+    digest = update_u64(digest, item.body);
   }
 
   return digest;

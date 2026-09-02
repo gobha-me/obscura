@@ -36,6 +36,19 @@ add_test(
   COMMAND ${PROJECT_SOURCE_DIR}/tools/lint/sim_purity.sh
 )
 
+# Truth and evidence correctness are simulation-only. This check starts at
+# every render/input source and public header, follows first-party includes, and
+# fails if either layer can reach the ground-truth model. The companion
+# self-test proves both the direct-token and transitive-include failure paths.
+add_test(
+  NAME ui-firewall
+  COMMAND ${PROJECT_SOURCE_DIR}/tools/lint/ui_firewall.sh
+)
+add_test(
+  NAME ui-firewall-selftest
+  COMMAND ${PROJECT_SOURCE_DIR}/tools/lint/ui_firewall.sh --selftest
+)
+
 # The art plate's drift check (tools/venice-bake/bake.py --check). Standalone
 # for the same reason as sim-purity: it is a script, not a `<dir>-test`.
 #

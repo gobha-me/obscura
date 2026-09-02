@@ -18,8 +18,7 @@
 #include <string>
 #include <vector>
 
-#include <obscura/world/evidence.hpp>
-#include <obscura/world/redaction.hpp>
+#include <obscura/world/projection.hpp>
 
 namespace obscura::render {
 
@@ -33,7 +32,7 @@ struct Plate {
 // Composes the plate for one item. `level` comes from the RedactionMask, not
 // from the item — a projected item has already had its fields blanked, so it
 // cannot report how much of itself is real.
-[[nodiscard]] auto compose(const world::Evidence& item, world::Fidelity level)
-    -> Plate;
+[[nodiscard]] auto compose(const world::EvidenceProjection& item,
+                           world::Fidelity level) -> Plate;
 
 } // namespace obscura::render

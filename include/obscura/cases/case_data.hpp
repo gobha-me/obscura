@@ -19,6 +19,7 @@
 
 #include <obscura/world/actors.hpp>
 #include <obscura/world/hull.hpp>
+#include <obscura/world/model.hpp>
 
 namespace obscura::cases {
 

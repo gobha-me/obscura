@@ -7,6 +7,8 @@
 #include <cstddef>
 #include <vector>
 
+#include <obscura/world/model.hpp>
+
 namespace obscura::world {
 
 namespace {
@@ -20,8 +22,12 @@ auto Hull::room_count() const -> std::size_t {
 }
 
 auto Hull::add_room() -> RoomId {
+  if (m_rooms.size() >= ROOM_ANY) {
+    return ROOM_ANY;
+  }
+
   const auto id = static_cast<RoomId>(m_rooms.size());
-  m_rooms.push_back(Room{.id = id, .neighbors = {}});
+  m_rooms.push_back(Compartment{.id = id});
   return id;
 }
 
@@ -40,22 +46,26 @@ auto Hull::connect(RoomId lhs, RoomId rhs) -> void {
     }
   };
 
-  link(m_rooms[lhs].neighbors, rhs);
-  link(m_rooms[rhs].neighbors, lhs);
+  link(m_rooms[lhs].adjacent, rhs);
+  link(m_rooms[rhs].adjacent, lhs);
 }
 
 auto Hull::adjacent(RoomId lhs, RoomId rhs) const -> bool {
   if (lhs >= m_rooms.size()) {
     return false;
   }
-  return std::ranges::binary_search(m_rooms[lhs].neighbors, rhs);
+  return std::ranges::binary_search(m_rooms[lhs].adjacent, rhs);
 }
 
 auto Hull::neighbors(RoomId id) const -> const std::vector<RoomId>& {
   if (id >= m_rooms.size()) {
     return kNoNeighbors;
   }
-  return m_rooms[id].neighbors;
+  return m_rooms[id].adjacent;
+}
+
+auto Hull::all() const -> const std::vector<Compartment>& {
+  return m_rooms;
 }
 
 } // namespace obscura::world

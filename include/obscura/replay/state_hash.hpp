@@ -16,9 +16,9 @@
 #include <cstdint>
 
 #include <obscura/core/ledger.hpp>
-#include <obscura/world/evidence.hpp>
 #include <obscura/world/incident.hpp>
 #include <obscura/world/redaction.hpp>
+#include <obscura/world/truth.hpp>
 
 namespace obscura::replay {
 

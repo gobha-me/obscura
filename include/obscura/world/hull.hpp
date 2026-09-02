@@ -14,22 +14,11 @@
 // seed alone, or replay/ and the case solver are both lying.
 
 #include <cstddef>
-#include <cstdint>
 #include <vector>
 
+#include <obscura/world/model.hpp>
+
 namespace obscura::world {
-
-using RoomId = std::uint16_t;
-
-inline constexpr RoomId kNoRoom = static_cast<RoomId>(0xFFFF);
-
-// One compartment. `neighbors` is sorted ascending and holds no duplicates —
-// sorted so that traversal order is a property of the data rather than of
-// insertion history, which is what keeps two runs of the same seed identical.
-struct Room {
-  RoomId id{kNoRoom};
-  std::vector<RoomId> neighbors{};
-};
 
 // The hull is a plain adjacency list indexed by RoomId. Deliberately a vector
 // rather than a hashed container: a hash map's iteration order is an
@@ -56,8 +45,10 @@ class Hull {
   // check of its own.
   [[nodiscard]] auto neighbors(RoomId id) const -> const std::vector<RoomId>&;
 
+  [[nodiscard]] auto all() const -> const std::vector<Compartment>&;
+
  private:
-  std::vector<Room> m_rooms{};
+  std::vector<Compartment> m_rooms{};
 };
 
 } // namespace obscura::world
