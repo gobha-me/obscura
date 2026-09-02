@@ -22,12 +22,20 @@ auto Hull::room_count() const -> std::size_t {
 }
 
 auto Hull::add_room() -> RoomId {
+  return add_room(Compartment{.id = static_cast<RoomId>(m_rooms.size())});
+}
+
+auto Hull::add_room(Compartment room) -> RoomId {
   if (m_rooms.size() >= ROOM_ANY) {
     return ROOM_ANY;
   }
 
   const auto id = static_cast<RoomId>(m_rooms.size());
-  m_rooms.push_back(Compartment{.id = id});
+  if (room.id != id) {
+    return ROOM_ANY;
+  }
+  room.adjacent.clear();
+  m_rooms.push_back(room);
   return id;
 }
 

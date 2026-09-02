@@ -4,6 +4,7 @@
 #include <obscura/world/actors.hpp>
 
 #include <cstddef>
+#include <utility>
 #include <vector>
 
 #include <obscura/world/hull.hpp>
@@ -16,17 +17,25 @@ auto Roster::size() const -> std::size_t {
 }
 
 auto Roster::add(RoomId start) -> ActorId {
-  if (m_actors.size() >= ACTOR_ANY) {
-    return ACTOR_ANY;
-  }
-
   const auto id = static_cast<ActorId>(m_actors.size());
-  m_actors.push_back(Actor{
+  return add(Actor{
       .id = id,
       .role = Role::deckhand,
       .name = static_cast<StringId>(id),
       .timeline = {{.when = 0, .where = start, .what = Action::move}},
   });
+}
+
+auto Roster::add(Actor actor) -> ActorId {
+  if (m_actors.size() >= ACTOR_ANY) {
+    return ACTOR_ANY;
+  }
+
+  const auto id = static_cast<ActorId>(m_actors.size());
+  if (actor.id != id || actor.timeline.empty()) {
+    return ACTOR_ANY;
+  }
+  m_actors.push_back(std::move(actor));
   return id;
 }
 

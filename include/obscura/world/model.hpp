@@ -30,6 +30,24 @@ inline constexpr EvidenceId EVIDENCE_NONE = static_cast<EvidenceId>(0xFFFFU);
 inline constexpr StringId STRING_NONE = static_cast<StringId>(0xFFFFU);
 inline constexpr TimeStep TIME_ANY = static_cast<TimeStep>(0xFFFF'FFFFU);
 
+// Stable bit positions for evidence-gating instruments. The order is the
+// canonical loadout-table order; recordings and authored cases persist the
+// resulting mask, so inserting in the middle would change their meaning.
+enum class Instrument : std::uint8_t {
+  spectral_lamp = 0,
+  decrypter = 1,
+  thermal_tap = 2,
+  auto_scribe = 3,
+  resonator = 4,
+  ossuary_tag = 5,
+};
+
+[[nodiscard]] constexpr auto instrument_mask(Instrument instrument)
+    -> InstrumentMask {
+  return static_cast<InstrumentMask>(1U
+                                     << static_cast<std::uint8_t>(instrument));
+}
+
 // Compatibility spellings for the pre-M1 skeleton. They name the same
 // sentinel, rather than preserving a second model of identity.
 inline constexpr RoomId kNoRoom = ROOM_ANY;
