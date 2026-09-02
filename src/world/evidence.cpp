@@ -4,9 +4,13 @@
 
 #include <obscura/world/evidence.hpp>
 
+#include <algorithm>
+
 #include <obscura/world/actors.hpp>
 #include <obscura/world/hull.hpp>
 #include <obscura/world/incident.hpp>
+#include <obscura/world/model.hpp>
+#include <obscura/world/truth.hpp>
 
 namespace obscura::world {
 
@@ -18,57 +22,44 @@ auto derive(const Hull& hull, const Roster& roster, const Incident& incident)
     return items;
   }
 
-  // One trace at the scene, always. The skeleton derives exactly this much: it
-  // is the minimum that makes the set non-empty for a well-formed incident, so
-  // the solver has something to be uniquely-solvable *about* before the real
-  // derivations land.
+  // The pre-Case-001 skeleton emits one positive fact. It is intentionally
+  // smaller than the authored evidence model: issue #31 replaces this fixture
+  // data, while this function keeps replay and hashing useful in the meantime.
   items.push_back(Evidence{
-      .kind = EvidenceKind::Trace,
-      .subject = kNoActor,
-      .where = incident.scene,
-      .when = incident.when,
-      .label = "disturbance",
+      .id = 0,
+      .location = incident.scene,
+      .kind = EvidenceKind::physical_trace,
+      .asserts = {{.actor = incident.culprit,
+                   .when = incident.when,
+                   .where = incident.scene,
+                   .what = ACTION_ANY}},
+      .veracity = Veracity::true_,
+      .requires_ = 0,
+      .body = 0,
   });
-
-  // Iterated in roster order, not by any associative container's ordering — the
-  // sequence of this vector is part of what state hashing compares.
-  for (const Actor& actor : roster.all()) {
-    if (actor.id == incident.culprit) {
-      continue;
-    }
-    items.push_back(Evidence{
-        .kind = EvidenceKind::Absence,
-        .subject = actor.id,
-        .where = incident.scene,
-        .when = incident.when,
-        .label = "elsewhere",
-    });
-  }
 
   return items;
 }
 
 auto is_consistent(const Evidence& item, const Roster& roster,
                    const Incident& incident) -> bool {
-  switch (item.kind) {
-    case EvidenceKind::Presence:
-      return item.subject == incident.culprit && item.where == incident.scene &&
-             item.when == incident.when;
-
-    case EvidenceKind::Absence:
-      return item.subject != incident.culprit || item.where != incident.scene ||
-             item.when != incident.when;
-
-    case EvidenceKind::Trace:
-      return item.where == incident.scene && item.when == incident.when;
-
-    case EvidenceKind::Testimony:
-      // Deliberately unchecked. An actor may lie, and the subject only has to
-      // be someone who exists.
-      return item.subject < roster.size();
+  if (item.veracity != Veracity::true_) {
+    // Stale and misleading evidence is part of the player's problem, not a
+    // ground-truth constraint the reference solver may use to reject a case.
+    return true;
   }
 
-  return false;
+  return std::ranges::all_of(item.asserts, [&](const Fact& fact) {
+    const bool actor_exists =
+        fact.actor == ACTOR_ANY || fact.actor < roster.size();
+    const bool actor_matches =
+        fact.actor == ACTOR_ANY || fact.actor == incident.culprit;
+    const bool room_matches =
+        fact.where == ROOM_ANY || fact.where == incident.scene;
+    const bool time_matches =
+        fact.when == TIME_ANY || fact.when == incident.when;
+    return actor_exists && actor_matches && room_matches && time_matches;
+  });
 }
 
 } // namespace obscura::world

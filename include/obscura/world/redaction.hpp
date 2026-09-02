@@ -15,22 +15,12 @@
 // what it is.
 
 #include <cstddef>
-#include <cstdint>
 #include <vector>
 
-#include <obscura/world/evidence.hpp>
+#include <obscura/world/projection.hpp>
+#include <obscura/world/truth.hpp>
 
 namespace obscura::world {
-
-// Ordered on purpose: a level is comparable, and fidelity is monotonic within a
-// run — it is raised by spending attention, never lowered by an accident of
-// drawing order.
-enum class Fidelity : std::uint8_t {
-  Hidden = 0,  // the item is not known to exist
-  Sensed = 1,  // it exists; kind and location are noise
-  Partial = 2, // kind and room resolve; the tick does not
-  Full = 3,    // the item reads as derived
-};
 
 // A fidelity level per item, parallel to the EvidenceSet it was built from.
 // Parallel rather than embedded so that the complete set stays immutable ground
@@ -60,6 +50,6 @@ class RedactionMask {
 // value, not a view — the caller must not be able to reach past it into ground
 // truth by holding a reference.
 [[nodiscard]] auto project(const EvidenceSet& complete,
-                           const RedactionMask& mask) -> EvidenceSet;
+                           const RedactionMask& mask) -> EvidenceProjectionSet;
 
 } // namespace obscura::world

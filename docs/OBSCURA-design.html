@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./organic.css">
+<style>
+doc-page:not(:defined){visibility:hidden}
+doc-page{background:var(--color-bg)}
+:root{--font-mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace}
+body{margin:0;font-family:var(--font-body);font-size:14.5px;line-height:1.6;color:var(--color-text);text-wrap:pretty}
+a{color:var(--color-accent-700);text-underline-offset:3px}
+a:hover{color:var(--color-accent-800)}
+h1,h2,h3,h4{font-family:var(--font-heading);font-weight:var(--font-heading-weight);color:var(--color-text);text-wrap:balance}
+h1{font-size:34px;line-height:1.1;letter-spacing:-.015em;margin:0 0 var(--space-3)}
+h2{font-size:23px;line-height:1.16;margin:var(--space-8) 0 var(--space-3);padding-bottom:var(--space-2);border-bottom:3px solid var(--color-accent-300)}
+h3{font-size:17px;margin:var(--space-6) 0 var(--space-1)}
+h4{font-family:var(--font-body);font-weight:700;font-size:12px;margin:var(--space-4) 0 var(--space-1);text-transform:uppercase;letter-spacing:.1em;color:var(--color-neutral-600)}
+p{margin:0 0 var(--space-2)}
+ul,ol{margin:0 0 var(--space-3);padding-left:20px}
+li{margin:0 0 var(--space-1)}
+.table{font-size:11.5px;line-height:1.4;margin:var(--space-2) 0 var(--space-4)}
+.table th{font-size:9px;padding:0 var(--space-2) var(--space-1) 0;vertical-align:bottom}
+.table td{padding:var(--space-1) var(--space-2) var(--space-1) 0;vertical-align:top}
+code{font-family:var(--font-mono);font-size:.86em;background:var(--color-neutral-200);padding:1px 5px;border-radius:var(--radius-sm)}
+kbd{font-family:var(--font-mono);font-size:.84em;background:var(--color-neutral-200);padding:1px 7px;border-radius:999px}
+pre{font-family:var(--font-mono);margin:0;break-inside:avoid}
+figure{margin:var(--space-4) 0 var(--space-6);break-inside:avoid}
+figcaption{font-family:var(--font-body);font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--color-neutral-600);margin-top:var(--space-2)}
+em{font-style:italic}
+</style>
+<script src="./doc-page.js"></script>
+</helmet>
+<doc-page margin="0.68in" style="background:var(--color-bg)">
+
+<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:4px solid var(--color-accent-300);padding-bottom:var(--space-3);margin-bottom:var(--space-6)">
+  <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-neutral-600)">Engineering design specification<br>termforge flagship title</div>
+  <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-accent-700);text-align:right">{{ docStatus }}<br>rev 2.0 · 2026-07-30</div>
+</div>
+
+<h1 style="font-size:52px;letter-spacing:-.03em;margin-bottom:4px">OBSCURA</h1>
+<p style="font-family:var(--font-body);font-size:17px;line-height:1.4;color:var(--color-neutral-700);max-width:34em;margin-bottom:22px">A seeded deduction roguelike aboard a derelict, in which rendering fidelity <em>is</em> the game state. The ship is drawn as glyph noise until you understand it; understanding it resolves it into art.</p>
+
+<table class="table" style="margin-bottom:var(--space-8)">
+<tbody>
+<tr><td style="width:20%;color:var(--color-neutral-600);text-transform:uppercase;letter-spacing:.07em;font-size:9px;padding-top:7px">Platform</td><td>Kitty graphics protocol only. No sixel path, no degraded mode, no undo.</td></tr>
+<tr><td style="color:var(--color-neutral-600);text-transform:uppercase;letter-spacing:.07em;font-size:9px;padding-top:7px">Stack</td><td>C++23 (GCC 13+ / Clang 17+), CMake ≥ 3.28, Catch2 v3, no package manager — <code>FetchContent</code> only.</td></tr>
+<tr><td style="color:var(--color-neutral-600);text-transform:uppercase;letter-spacing:.07em;font-size:9px;padding-top:7px">Library</td><td>termforge v0.1.7 consumed as <code>termforge::lib</code>; OBSCURA is a separate repository.</td></tr>
+<tr><td style="color:var(--color-neutral-600);text-transform:uppercase;letter-spacing:.07em;font-size:9px;padding-top:7px">Audio</td><td>RtAudio, tier 2 (optional). Sink interface is tier 1. See §10.</td></tr>
+<tr><td style="color:var(--color-neutral-600);text-transform:uppercase;letter-spacing:.07em;font-size:9px;padding-top:7px">Implementer</td><td>Solo developer with Claude Code. Milestone task files ship alongside this document.</td></tr>
+<tr><td style="color:var(--color-neutral-600);text-transform:uppercase;letter-spacing:.07em;font-size:9px;padding-top:7px">Supersedes</td><td>OBSCURA design draft v1.</td></tr>
+</tbody>
+</table>
+
+<div style="background:var(--color-surface);border-radius:calc(var(--radius-lg) * 1.15);padding:var(--space-4) var(--space-6);margin-bottom:var(--space-6);break-inside:avoid">
+<h4 style="margin-top:0">What changed from draft v1</h4>
+<p style="margin-bottom:0">Draft v1 assumed capabilities termforge does not expose yet. Reading the library at v0.1.7: the Kitty driver has base64/APC transmit, classic placement, Unicode placeholders and per-region image IDs with LRU eviction — but <strong>no layer API, no animation/frame-edit path, and no Kitty keyboard protocol</strong>. Three of the five bands in §7.1 and the entire commit gesture in §9 are unlanded library work. This document therefore splits the plan into a <strong>library track (T-series)</strong> and a <strong>game track (M-series)</strong>, with an explicit dependency matrix (§13.1). It also resolves the audio question, corrects the issue references (there is no #212; the repository's issues currently run to #102), and adds a worked, provably solvable authored case (Appendix A).</p>
+</div>
+
+<h2 style="break-before:page">1 · Product definition</h2>
+
+<h3>1.1 Pillars, stated as constraints</h3>
+<p>These are load-bearing. A feature that violates one is cut, not negotiated. Each is written so that a reviewer can fail a pull request against it.</p>
+
+<table class="table">
+<thead><tr><th style="width:4%">#</th><th style="width:22%">Pillar</th><th>Normative form</th></tr></thead>
+<tbody>
+<tr><td>P1</td><td>Fidelity is knowledge</td><td>Whether a compartment renders as glyphs or as an image MUST be a pure function of its <code>ResolutionState</code>, which is simulation state. The render layer MUST NOT choose fidelity for aesthetic reasons. If a feature would look identical in a conventional engine, it does not belong.</td></tr>
+<tr><td>P2</td><td>Deterministic to the bit</td><td>Seed in, world out. Simulation state MUST contain no floating-point, no wall-clock, no unordered iteration. Verified by CI gate, not by intent (§3.5).</td></tr>
+<tr><td>P3</td><td>Consequence, not undo</td><td>No save-scum, no un-resolve, no rewind. Spent budget is gone. A resolved compartment stays resolved.</td></tr>
+<tr><td>P4</td><td>Diegetic interface</td><td>No floating HUD. Every readout is an instrument the player chose to bring. Persistent chrome is limited to the console bezel (§8.2), which is diegetically part of the salvage rig.</td></tr>
+<tr><td>P5</td><td>Fun is the gate</td><td>M1 proves the loop with one hand-authored case before any generator work begins. Gates are honest or they are worthless.</td></tr>
+<tr><td>P6</td><td>Async community only</td><td>Shared daily seed, verifiable replays, leaderboard. No synchronous multiplayer, no voice.</td></tr>
+</tbody>
+</table>
+
+<h3>1.2 The loop</h3>
+<figure>
+<pre style="font-size:11.5px;line-height:1.35;background:var(--color-surface);padding:var(--space-4) var(--space-6);border-radius:var(--radius-md);color:var(--color-neutral-800)">  PREPARE ──▶ BOARD ──▶ SURVEY ──▶ GATHER ──▶ COMMIT ──▶ RESOLVE
+                 ▲                                          │
+                 └────────── budget exhausted ◀─────────────┘
+                                    │
+                                 DEBRIEF</pre>
+<figcaption>Fig. 1 — Session loop. RESOLVE is the only state that returns budget.</figcaption>
+</figure>
+
+<table class="table">
+<thead><tr><th style="width:14%">Phase</th><th>Definition</th></tr></thead>
+<tbody>
+<tr><td>Prepare</td><td>Choose instruments against a shared mass/power budget (§11.4). A loadout is a bet about what kind of incident this is, made under uncertainty.</td></tr>
+<tr><td>Board</td><td>A derelict is instantiated from the seed. Every compartment is <code>UNKNOWN</code>: box-noise, ASCII garbage, half-legible manifest text. Ignorance rendered literally.</td></tr>
+<tr><td>Survey</td><td>Move through the hull. Surveying costs charge and promotes a compartment <code>UNKNOWN → SURVEYED</code>: wireframe firms up, damage tint enters the cell backgrounds, evidence markers appear. Not yet art.</td></tr>
+<tr><td>Gather</td><td>Examine evidence. Each item asserts <code>Fact</code>s about actors, times, places and actions, and enters the log, which scrolls as real text with inline images.</td></tr>
+<tr><td>Commit</td><td>Assert a triple: <em>this actor was in this compartment doing this thing</em>. Commits are held pending in batches of three.</td></tr>
+<tr><td>Resolve</td><td>Three correct pending commits lock. Their compartments dissolve permanently into full art plates and a partial refund is paid. A wrong batch costs charge and does <strong>not</strong> reveal which of the three failed.</td></tr>
+<tr><td>Debrief</td><td>Run ends on charge exhaustion or full reconstruction. Score, replay export, unlock progression.</td></tr>
+</tbody>
+</table>
+<p>The refund rule is the tension curve. Good deduction extends the run, so a skilled player goes deeper on the same charge; bad deduction ends it. Everything in §4.3 exists to make that curve tunable by one table of integers.</p>
+
+<h2>2 · Platform baseline and the dependency contract</h2>
+<p>OBSCURA is a separate repository that consumes termforge as a library. It never vendors termforge sources and never patches them locally; anything missing is filed as a library ticket and landed upstream first (§12). This is the whole point of the flagship: it exists to drive real library work.</p>
+
+<h3>2.1 What termforge already gives us</h3>
+<table class="table">
+<thead><tr><th style="width:26%">Facility</th><th style="width:12%">Status</th><th>How OBSCURA uses it</th></tr></thead>
+<tbody>
+<tr><td><code>KittyDriver</code> — base64/APC transmit, classic cursor placement</td><td style="color:var(--color-accent-2-700);font-weight:600">Landed</td><td>Art plate transmission.</td></tr>
+<tr><td>Unicode placeholders (tmux-first)</td><td style="color:var(--color-accent-2-700);font-weight:600">Landed</td><td>The evidence log's inline images (§7.5) — the screenshot that sells the project.</td></tr>
+<tr><td>Stable per-region image IDs + LRU eviction</td><td style="color:var(--color-accent-2-700);font-weight:600">Landed</td><td>Plate residency; partial credit against ticket T-D3.</td></tr>
+<tr><td><code>App::on_tick(dt)</code>, <code>set_tick_hz</code>, <code>set_max_tick_dt</code></td><td style="color:var(--color-accent-2-700);font-weight:600">Landed</td><td>Fixed-step animation clock. Note: the clock drives <em>render only</em> (§3.4).</td></tr>
+<tr><td><code>Terminal</code> RAII raw mode, alt-screen lifecycle, SIGWINCH</td><td style="color:var(--color-accent-2-700);font-weight:600">Landed</td><td>Session setup/teardown. Never leave the terminal raw, including on the exception path.</td></tr>
+<tr><td>Modal overlay stack, <code>TextBox</code> scrollback, <code>Frame</code>, <code>glyphs.hpp</code> border families</td><td style="color:var(--color-accent-2-700);font-weight:600">Landed</td><td>Instrument panels, evidence log, compartment wireframes.</td></tr>
+<tr><td>Degradation-as-events (<code>std::expected</code> + <code>ErrorEvent</code>)</td><td style="color:var(--color-accent-2-700);font-weight:600">Landed</td><td>OBSCURA consumes downgrade events and <em>refuses to run</em> (§2.3) rather than degrading.</td></tr>
+</tbody>
+</table>
+
+<h3>2.2 What OBSCURA needs that does not exist yet</h3>
+<p>This is the honest critical path. Five of these are the draft's §10 requests; the rest surfaced while reading the library.</p>
+<table class="table">
+<thead><tr><th style="width:9%">Ticket</th><th style="width:30%">Need</th><th>Why OBSCURA cannot proceed without it</th></tr></thead>
+<tbody>
+<tr><td>T-B1</td><td>Named layer API over raw z-index, including the below-background sentinel</td><td>Three of the five bands in §7.1 are unreachable today. No application should hand-write <code>-1073741825</code>.</td></tr>
+<tr><td>T-C1</td><td>Incremental frame edits to a resident image</td><td>The resolve dissolve (§7.4) is the signature moment. Retransmitting a plate 12 times blows the bandwidth budget.</td></tr>
+<tr><td>T-E1</td><td>Kitty keyboard protocol with <code>report-event-types</code></td><td>The commit gesture is hold-to-aim / release-to-confirm. Without genuine key-release events it becomes a timing heuristic, which violates P2.</td></tr>
+<tr><td>T-F1</td><td>Deterministic input record/playback in the event system</td><td>The leaderboard, the replay format and the regression corpus all sit on it.</td></tr>
+<tr><td>T-A1</td><td>Capability floor: declare requirements, refuse to start below them <span style="color:var(--color-neutral-600)">(open as #91)</span></td><td>"Kitty only, no degraded mode" needs a mechanism, not a README sentence.</td></tr>
+<tr><td>T-A2</td><td>Virtual <code>App::setup</code>/<code>teardown</code> hooks <span style="color:var(--color-neutral-600)">(open as #97)</span></td><td>OBSCURA owns an asset pack, an audio device and a replay file. All three need deterministic teardown on the exception path.</td></tr>
+<tr><td>T-A4</td><td>Query the cell rows/cols an <code>Image</code> occupied <span style="color:var(--color-neutral-600)">(open as #100)</span></td><td>Cell-accurate plate placement (§8) cannot guess. Both library examples currently guess, and one guessed wrong.</td></tr>
+<tr><td>T-D1</td><td>Explicit image lifecycle across clear-screen and main↔alt-screen</td><td>Ghost images are a month-long bug hunt if this lands after game logic.</td></tr>
+<tr><td>T-H4</td><td>Bytes-per-frame meter on the driver</td><td>The KB/minute budget (§7.7) is a design constraint from day one, and you cannot hold a budget you cannot measure.</td></tr>
+</tbody>
+</table>
+
+<h3>2.3 Refuse-to-start contract</h3>
+<p>OBSCURA declares a hard floor and exits cleanly in cooked mode with a diagnostic if it is not met. It never enters the alt screen before the floor is verified.</p>
+<table class="table">
+<thead><tr><th style="width:34%">Requirement</th><th style="width:20%">Floor</th><th>On failure</th></tr></thead>
+<tbody>
+<tr><td>Graphics protocol</td><td>Kitty, images below cell background supported</td><td>Exit 78, print the probe response and a one-line "OBSCURA requires a Kitty-protocol terminal".</td></tr>
+<tr><td>Keyboard protocol</td><td>Progressive enhancement with event types (press/repeat/release)</td><td>Exit 78. Do not fall back to timing heuristics.</td></tr>
+<tr><td>Grid size</td><td>≥ 120 × 40 cells</td><td>Exit 78 with the measured size. Resizing below the floor mid-session pauses to a modal until restored.</td></tr>
+<tr><td>Cell pixel geometry</td><td>Known and ≥ 6 × 12 px</td><td>Exit 78; plates cannot be placed without it.</td></tr>
+<tr><td>Any downgrade <code>ErrorEvent</code> touching graphics or input</td><td>—</td><td>Treated as fatal at startup, logged and ignored after (P1: fidelity is never a presentation choice).</td></tr>
+</tbody>
+</table>
+
+<h3>2.4 Repository layout</h3>
+<figure>
+<pre style="font-size:10.5px;line-height:1.5;background:var(--color-surface);padding:var(--space-4) var(--space-6);border-radius:var(--radius-md);color:var(--color-neutral-800)">obscura/
+  CMakeLists.txt            C++23, CMake 3.28, FetchContent: termforge v0.1.7, Catch2 v3
+  CMakePresets.json         default / clang / asan / ubsan / release
+  cmake/toolchain/          clang.cmake, asan.cmake  (mirrors termforge's layout)
+  CLAUDE.md AGENTS.md       agent conventions; determinism rules restated as hard rules
+  include/obscura/          public headers, one per module
+  src/
+    core/                   App subclass, session state machine, budget ledger
+    world/       [SIM]      hull graph, actors, incident, evidence, redaction, solver
+    render/                 bands, plates, dissolve, glyph substrate, log view
+    input/                  key map, commit gesture state machine
+    audio/                  sink interface, NullSink, RtAudioSink (optional target)
+    replay/                 recorder, player, state hashing, verify tool
+  cases/                    authored cases as C++ data (DR-13) — case001_cold_lantern.cpp
+  assets/                   baked pack + manifest.hash (generated offline, checked in)
+  test/                     Catch2 suites; test/corpus/*.replay golden set
+  tools/                    venice-bake/, replay-verify/, lint/sim_purity.sh
+  docs/                     this document, MANUAL.md, tickets/</pre>
+<figcaption>Fig. 2 — Repository layout. <code>[SIM]</code> marks the determinism firewall: files under <code>src/world/</code> are subject to the purity gate in §3.5.</figcaption>
+</figure>
+
+<h2 style="break-before:page">3 · Determinism specification</h2>
+<p>Non-negotiable. The leaderboard, the replay format and the regression suite all depend on it, and the cheapest place to enforce it is CI.</p>
+
+<h3>3.1 Seed and streams</h3>
+<ul>
+<li>Seed is <code>uint64_t</code>. The daily seed is <code>splitmix64(hash(utc_date_yyyymmdd) ^ SALT)</code>, computed once at launch and then treated as data.</li>
+<li>Every subsystem draws from its own named stream: <code>rng(seed, stream_id)</code>. Adding a subsystem later must not perturb existing ones, so old replays stay valid across releases.</li>
+<li>splitmix64 for stream derivation; PCG-XSH-RR for the streams themselves. Both are integer-only and give cheap independent streams.</li>
+<li><strong>Tile IDs are manifest-declared integers covered by the pack hash</strong>, never array indices. If IDs shifted when a tile was added, every existing replay would silently describe a different ship.</li>
+<li><strong>Weighted selection is integer-only.</strong> Tile and variant choice uses cumulative integer weights over a <em>sorted</em> candidate list. The usual entropy-driven formulation of this kind of constraint solving is floating-point, which would violate §3.2 outright.</li>
+</ul>
+<table class="table">
+<thead><tr><th style="width:8%">ID</th><th style="width:24%">Stream</th><th>Draws</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><code>STREAM_HULL</code></td><td>Compartment count, archetype assignment, graph edges, grid embedding.</td></tr>
+<tr><td>2</td><td><code>STREAM_CREW</code></td><td>Actor count, roles, names, initial stations.</td></tr>
+<tr><td>3</td><td><code>STREAM_INCIDENT</code></td><td>Archetype, origin compartment, propagation order, actor decisions.</td></tr>
+<tr><td>4</td><td><code>STREAM_EVIDENCE</code></td><td>Derivation, kinds, instrument gating, veracity assignment.</td></tr>
+<tr><td>5</td><td><code>STREAM_REDACT</code></td><td>Redaction candidate ordering.</td></tr>
+<tr><td>6</td><td><code>STREAM_FLAVOR</code></td><td>Non-load-bearing text selection. Never consulted by the solver.</td></tr>
+<tr><td>7</td><td><code>STREAM_GLYPH</code></td><td>Glyph-noise substrate for <code>UNKNOWN</code> compartments. Render-adjacent but seeded, so screenshots of a seed match.</td></tr>
+</tbody>
+</table>
+
+<h3>3.2 Numeric discipline</h3>
+<p>No floating-point anywhere in simulation state. Integers only; where a fraction is unavoidable, <code>Q16.16</code> fixed-point with explicit rounding. Floats are permitted in the render layer exclusively, and the render layer MUST NOT feed back into simulation — no "measure the animation and branch on it".</p>
+
+<h3>3.3 Ordering discipline</h3>
+<p>No <code>std::unordered_*</code> iteration in any order-sensitive path; sim containers are <code>std::vector</code> or sorted flat maps with explicit comparators. IDs are dense integers assigned in generation order, never pointer- or hash-derived. Sorting is always by a total order that includes the ID as final tiebreak.</p>
+
+<h3>3.4 The tick is cosmetic</h3>
+<p>This is the sharpest correction to draft v1. OBSCURA is turn-based: <strong>simulation advances only on discrete input events, never on ticks</strong>. <code>App::on_tick(dt)</code> drives the dissolve, cursor blink and log scrolling — nothing that touches sim state. Consequently the replay does not need tick fidelity to reproduce a session, only input order.</p>
+<figure>
+<pre style="font-size:10.5px;line-height:1.5;background:var(--color-surface);padding:var(--space-4) var(--space-6);border-radius:var(--radius-md);color:var(--color-neutral-800)">struct ReplayEvent {   // 8 bytes packed
+  uint32_t seq;        // monotonic; the ONLY sim-visible ordering
+  uint16_t key;        // normalised key code
+  uint8_t  mods;       // disambiguated modifier mask
+  uint8_t  type;       // PRESS | REPEAT | RELEASE
+};
+struct Replay {
+  uint32_t magic, version;
+  uint64_t seed;
+  uint32_t build_id;              // asset pack manifest hash, truncated
+  uint32_t event_count;
+  ReplayEvent events[];           // ~8 B x ~250 events = 2 KB per session
+  uint64_t final_state_hash;      // FNV-1a 64 over the canonical serialisation
+};</pre>
+<figcaption>Fig. 3 — Replay format. Wall-clock timing is deliberately absent: a session replays identically on a loaded machine.</figcaption>
+</figure>
+<p>The server re-simulates a submitted replay and compares <code>final_state_hash</code>, which makes the leaderboard unfakeable without shipping any anti-cheat. The same file is the bug-report format and the regression fixture: bug reports arrive as playable artifacts. Do not underrate this.</p>
+
+<h3>3.5 Enforcement, not intention</h3>
+<table class="table">
+<thead><tr><th style="width:24%">Gate</th><th>Mechanism</th></tr></thead>
+<tbody>
+<tr><td>Sim purity</td><td><code>tools/lint/sim_purity.sh</code> runs as a CTest test over the <code>[SIM]</code> source set and fails on <code>float</code>, <code>double</code>, <code>std::chrono</code>, <code>random_device</code>, <code>rand(</code>, <code>time(</code>, <code>unordered_</code>, and on any include outside an allow-list. Crude, greppable, effective.</td></tr>
+<tr><td>Golden corpus</td><td><code>test/corpus/*.replay</code> — at minimum one per authored case plus every bug report ever filed. Each replays and must match its recorded final-state hash.</td></tr>
+<tr><td>Cross-configuration</td><td>The corpus must produce <em>identical</em> hashes under GCC and Clang, at <code>-O0</code> and <code>-O2</code>, and under ASan/UBSan. A divergence is undefined behaviour, found cheaply.</td></tr>
+<tr><td>Audio independence</td><td>The corpus is run with audio compiled out and with the <code>NullSink</code>; hashes must be unchanged. Prevents audio ever becoming load-bearing.</td></tr>
+<tr><td>Stream isolation</td><td>A test adds a synthetic subsystem stream and asserts the existing corpus still matches — the property that keeps old replays valid across releases.</td></tr>
+</tbody>
+</table>
+
+<h2>4 · Session model</h2>
+
+<h3>4.1 Modes</h3>
+<p>Exactly one mode owns the screen at a time; instruments are modal overlays on top of <code>SHIP</code>, never permanent chrome (P4).</p>
+<table class="table">
+<thead><tr><th style="width:16%">Mode</th><th style="width:30%">Enter</th><th>Owns</th></tr></thead>
+<tbody>
+<tr><td><code>LOADOUT</code></td><td>Session start</td><td>Instrument selection against mass/power. One-way exit: boarding is a commitment.</td></tr>
+<tr><td><code>SHIP</code></td><td>Board</td><td>Hull view, cursor, survey, evidence markers, the console bezel.</td></tr>
+<tr><td><code>LOG</code></td><td><kbd>L</kbd></td><td>Evidence log, scrollback, inline images, filter by actor/room/kind.</td></tr>
+<tr><td><code>AIM</code></td><td>Hold <kbd>Space</kbd></td><td>Commit construction overlay. Released key confirms; <kbd>Esc</kbd> aborts free of charge.</td></tr>
+<tr><td><code>INSTRUMENT</code></td><td><kbd>i</kbd></td><td>One instrument's readout, drawn as its own physical panel.</td></tr>
+<tr><td><code>DEBRIEF</code></td><td>Charge ≤ 0, or full reconstruction, or <kbd>q</kbd> confirmed</td><td>Score, resolved-plate gallery, replay export path.</td></tr>
+</tbody>
+</table>
+
+<h3>4.2 Compartment state</h3>
+<p>Transitions are one-way. There is no un-resolving.</p>
+<figure>
+<pre style="font-size:11px;line-height:1.45;background:var(--color-surface);padding:var(--space-4) var(--space-6);border-radius:var(--radius-md);color:var(--color-neutral-800)">UNKNOWN  ──survey──▶  SURVEYED  ──batch of 3 correct──▶  RESOLVED
+   │                      │                                  │
+   glyph noise            wireframe + damage tint in          art plate below the
+   no image placement     cell backgrounds; markers           backgrounds; glyphs cleared</pre>
+<figcaption>Fig. 4 — <code>ResolutionState</code>. This enum is simulation state, not a render flag (P1).</figcaption>
+</figure>
+
+<h3>4.3 Budget economy</h3>
+<p>One pool, called <strong>suit charge</strong> (SC) — diegetic, integer, and the only currency (DR-02). Values below are the M1 starting point and are expected to move during the fun test; they live in one <code>constexpr</code> table so tuning is a one-line diff.</p>
+<table class="table">
+<thead><tr><th style="width:38%">Action</th><th style="width:14%">Cost</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td>Starting charge</td><td>+120 SC</td><td>Fixed for daily seeds; free-play unlocks may vary it.</td></tr>
+<tr><td>Move to adjacent compartment</td><td>1 SC</td><td>Breached compartments cost 3 (suit work).</td></tr>
+<tr><td>Survey a compartment</td><td>8 SC</td><td>Uniform in M1. Damage-scaled costs are a tuning lever, not a launch feature.</td></tr>
+<tr><td>Examine an evidence item (first read)</td><td>3 SC</td><td>Enters the log permanently.</td></tr>
+<tr><td>Re-read a logged item</td><td>2 SC</td><td>Free with the auto-scribe.</td></tr>
+<tr><td>Abort an aim before release</td><td>0 SC</td><td>Aiming must never be taxed, or players stop exploring the space.</td></tr>
+<tr><td>Batch of three resolves correct</td><td>+15 SC</td><td>Refund, 5 per commit. The tension curve.</td></tr>
+<tr><td>Batch of three resolves wrong</td><td>−20 SC</td><td>Which of the three failed is <strong>never</strong> disclosed. Commits stay pending for rework.</td></tr>
+</tbody>
+</table>
+<p>Case 001 (Appendix A) is authored against these numbers: surveying every evidence-bearing compartment and reading every served item costs about 136 SC against a starting 120, so at least one correct batch must land mid-run. That is the intended shape — the case is solvable, but not without committing before you feel ready.</p>
+
+<h2 style="break-before:page">5 · World model</h2>
+<p>Declarations are normative; field order is not. All IDs are dense <code>uint16_t</code> indices assigned in generation order.</p>
+<figure>
+<pre style="font-size:10.5px;line-height:1.5;background:var(--color-surface);padding:var(--space-4) var(--space-6);border-radius:var(--radius-md);color:var(--color-neutral-800)">enum class Archetype : uint8_t { bridge, galley, berth, hold, engineering, medbay, airlock, comms };
+enum class Damage    : uint8_t { intact, damaged, breached };
+enum class Resolution: uint8_t { unknown, surveyed, resolved };
+enum class Action    : uint8_t { move, stow, seal, isolate, vent, fight_fire, broadcast, treat, abandon, hide, die };
+enum class Veracity  : uint8_t { true_, stale, misleading };          // internal only, never surfaced
+enum class EvidenceKind : uint8_t { log_fragment, physical_trace, corpse, cargo_seal,
+                                    manifest, damage_pattern, personal_effect };
+
+struct Compartment {
+  RoomId      id;  Archetype archetype;  Damage damage;  Resolution state;
+  CellRect    bounds;                    // embedding on the terminal grid, §8.1
+  RoomIdList  adjacent;                  // sorted, dense
+};
+
+struct Fact {                            // wildcards make evidence partial
+  ActorId  actor;                        // or ACTOR_ANY
+  TimeStep when;                         // or TIME_ANY
+  RoomId   where;                        // or ROOM_ANY
+  Action   what;                         // or ACTION_ANY
+};
+
+struct Evidence {
+  EvidenceId          id;
+  RoomId              location;
+  EvidenceKind        kind;
+  std::vector&lt;Fact&gt;   asserts;
+  Veracity            veracity;
+  InstrumentMask      requires_;         // instruments needed to read it
+  StringId            body;              // authored or template-composed text
+};
+
+struct ActorStep { TimeStep when; RoomId where; Action what; };
+struct Actor     { ActorId id; Role role; StringId name; std::vector&lt;ActorStep&gt; timeline; };
+
+struct Commit  { ActorId actor; RoomId where; Action what; };   // the player's assertion
+struct Truth   { std::vector&lt;Actor&gt; crew; IncidentArchetype cause; RoomId origin;
+                 std::vector&lt;Compartment&gt; hull; std::vector&lt;Evidence&gt; all, served; };</pre>
+<figcaption>Fig. 5 — Core types. <code>Truth</code> is fully specified before any evidence exists, which is what makes verification trivial and the solver possible at all.</figcaption>
+</figure>
+<p>A commit is verified by scanning the asserting actor's timeline for a step matching <code>(where, what)</code> at any time. Time is deliberately not part of a commit in M1 — asserting <em>when</em> is a candidate difficulty axis for later cases, not a launch requirement.</p>
+
+<h2>6 · World generation</h2>
+<p>Order matters: generate truth first, derive evidence second, redact third. Reversing any two of those produces puzzles that are unfair in ways that are extremely hard to debug.</p>
+
+<h3>6.1 Hull topology — a tile grammar</h3>
+<p>The hull is not a graph that gets drawn; it is a <strong>tile layout whose door adjacency <em>is</em> the graph</strong>. Inverting that relationship is what makes the layout stage structurally sound rather than validated after the fact: an illegal ship becomes unrepresentable instead of rejected.</p>
+<figure>
+<pre style="font-size:10.5px;line-height:1.5;background:var(--color-surface);padding:var(--space-4) var(--space-6);border-radius:var(--radius-md);color:var(--color-neutral-800)">enum class EdgeKind : uint8_t { hull, bulkhead, door, open };
+
+struct Tile {
+  TileId      id;         // manifest-declared integer, NEVER an array index
+  Archetype   archetype;
+  Damage      damage;
+  EdgeKind    n, e, s, w; // the socket signature
+  uint8_t     weight;     // integer weight; no floating-point entropy
+  VariantMask variants;   // bloodied, scorched, flooded — decals, not tiles
+  CellRect    extent;     // 22 x 9 for a compartment box
+};</pre>
+<figcaption>Fig. 5b — Tile metadata. <code>TileId</code> is declared in the pack manifest and covered by its hash: if IDs shifted when a tile was added, every existing replay would be invalidated.</figcaption>
+</figure>
+<h4>Constraints</h4>
+<ul>
+<li>Any tile edge on the grid boundary MUST be <code>hull</code>. Exterior walls stop being a convention the generator remembers.</li>
+<li>Adjacent sockets must match: <code>door</code>↔<code>door</code>, <code>bulkhead</code>↔<code>bulkhead</code>, <code>open</code>↔<code>open</code> within one compartment. <code>hull</code> never faces an interior.</li>
+<li>Every compartment MUST carry at least one <code>door</code>. No sealed rooms, ever.</li>
+<li>The hull graph is <em>derived</em> from door adjacency. Incident propagation therefore runs over real doors, which is more physically honest than propagation over an abstract graph.</li>
+<li>Selection uses integer cumulative weights over a <strong>sorted</strong> candidate list, drawn from <code>STREAM_HULL</code>. Backtracking is depth-bounded; exhaustion rejects the seed rather than degrading the ship.</li>
+<li>Plausibility survives as socket authoring, not as generator logic: the engine room's tile set only offers aft-facing hull edges, airlock tiles require a boundary edge.</li>
+</ul>
+<h4>Room-label precedence and ship classes</h4>
+<p>Compartment count is a consequence of ship class, not a die roll. Every class gets the required prefix; larger classes append labels in a fixed order, which is also what gives the renderer's 15-box cap a principled meaning.</p>
+<table class="table">
+<thead><tr><th style="width:20%">Class</th><th style="width:14%">Rooms</th><th>Labels</th></tr></thead>
+<tbody>
+<tr><td><strong>Required prefix</strong><br>(every ship)</td><td>6</td><td>bridge · <strong>engine room</strong> · hold · berth · airlock · galley</td></tr>
+<tr><td>Tender</td><td>6–8</td><td>prefix, then medbay · comms. Pump-bay function is folded into the engine room at this size.</td></tr>
+<tr><td>Freighter <span style="color:var(--color-neutral-600)">— case 001's class</span></td><td>10–14</td><td>prefix + medbay · comms · hold-2 · berth-2 · pump bay · workshop</td></tr>
+<tr><td>Liner / hauler</td><td>16–24</td><td>the above + second airlock, then repeats of hold and berth to fill</td></tr>
+</tbody>
+</table>
+<p>Every ship has an engine room — <em>engineering</em> is a department, not a compartment — so the engine room is in the required prefix and the pump bay is the growth-tier engineering space. This ordering partly closes DR-05: the count follows from the class, and only the class boundaries need tuning against session length.</p>
+<p>Embedding still resolves onto the three-band deck plan (§8.1), and the socket rules guarantee what that section previously only asked for: every edge is drawable horizontally within a band or vertically between bands, with no diagonal connectors.</p>
+
+<h3>6.2 Ground truth incident</h3>
+<p>The generator produces a complete causal history before it produces a single piece of evidence: 6–10 crew actors, each with a role and an ordered timeline of <code>(time, compartment, action)</code>; one root cause from <code>{hull breach, fire, mutiny, contraband reaction, contagion}</code>; and propagation rules that advance the incident through the hull over discrete steps, moving actors and mutating damage states.</p>
+
+<h3>6.3 Evidence derivation and veracity</h3>
+<p>Each timeline step and each damage transition emits candidate evidence, gated by instrument and kind. <code>Veracity</code> is internal and never surfaced. <code>STALE</code> items were true earlier in the timeline but mislead about the final state; <code>MISLEADING</code> items were planted or misrecorded. Keep <code>MISLEADING</code> at 10–15% of the served set at most — deduction games die when the player stops trusting the fiction. Case 1 ships with zero misleading items and two stale ones (DR-06).</p>
+<p>The most valuable evidence is <em>honest but easy to misread</em>: Appendix A's engineer's glove in Hold 2 is <code>TRUE</code>, and it is the item most likely to cost a player a batch. Design for that, not for lies.</p>
+
+<h3>6.4 Redaction</h3>
+<p>After deriving the full set, remove items until the puzzle is solvable but not trivial. "Solvable" must be <em>proven</em> by the solver, never assumed (§13, M3). The redaction pass has one hard invariant: for every commit in the solution key, at least one <em>derivation chain</em> of served items must pin it under the published loadout. Appendix A demonstrates the chain table by hand; M3's solver produces it mechanically.</p>
+
+<h2 style="break-before:page">7 · Rendering architecture</h2>
+<p>This is the part people write blog posts about, and the part that must be built first: if the resolve transition does not feel good, nothing else matters.</p>
+
+<h3>7.1 The five compositing bands</h3>
+<p>Kitty gives independently addressable image planes interleaved with the terminal's own text and background planes. OBSCURA uses all five. The bottom band is the interesting one: Kitty defines a threshold below which images render <em>beneath cell background colours</em>.</p>
+<table class="table">
+<thead><tr><th style="width:6%">Band</th><th style="width:26%">Plane</th><th style="width:16%">Layer name</th><th>Content</th></tr></thead>
+<tbody>
+<tr><td>5</td><td>Images at z ≥ 0</td><td><code>Layer::overlay</code></td><td>Instrument panels, evidence pins, cursor reticle.</td></tr>
+<tr><td>4</td><td>Text cells</td><td><code>Layer::glyph</code></td><td>The glyph substrate — the unknown. Wireframes, manifest garbage, console bezel.</td></tr>
+<tr><td>3</td><td>Images at z &lt; 0</td><td><code>Layer::plate</code></td><td>Resolved compartment art.</td></tr>
+<tr><td>2</td><td>Cell background colours</td><td><code>Layer::tint</code></td><td>Damage tint, palette wash, survey firming.</td></tr>
+<tr><td>1</td><td>Images below backgrounds</td><td><code>Layer::hull</code></td><td>Ambient hull plate — the one continuous image behind everything.</td></tr>
+</tbody>
+</table>
+<p>Ticket T-B1 wraps these in a named layer API. No call site in OBSCURA may contain a raw z integer, and the below-background sentinel appears exactly once, in termforge.</p>
+
+<h3>7.2 Band ownership rules</h3>
+<p>A compartment's appearance is derived, never authored per-frame. Given <code>Resolution</code> and <code>Damage</code>, the renderer computes which bands carry content for that compartment's <code>CellRect</code>:</p>
+<table class="table">
+<thead><tr><th style="width:16%">State</th><th style="width:18%">glyph</th><th style="width:18%">tint</th><th style="width:18%">plate</th><th>hull</th></tr></thead>
+<tbody>
+<tr><td><code>unknown</code></td><td>Seeded noise (<code>STREAM_GLYPH</code>)</td><td>Neutral wash</td><td>—</td><td>Visible through gaps</td></tr>
+<tr><td><code>surveyed</code></td><td>Wireframe + markers</td><td>Damage tint</td><td>—</td><td>Visible</td></tr>
+<tr><td><code>resolved</code></td><td>Cleared</td><td>Cleared to transparent</td><td>Art plate</td><td>Occluded</td></tr>
+</tbody>
+</table>
+
+<h3>7.3 The glyph substrate</h3>
+<p>An <code>UNKNOWN</code> compartment is filled from a seeded generator over three character classes: shade blocks (<code>░▒▓</code>) for mass, box-drawing debris (<code>╫╬┼╪</code>) for structure that has not resolved into structure, and half-legible fragments of the real manifest text for that archetype. The third class is what makes it read as ignorance rather than as static — the player can almost read it. Fragment length and corruption ratio scale with distance from the cursor, so the compartment you are standing next to is legibly <em>almost</em> known.</p>
+
+<h3>7.4 The resolve transition</h3>
+<p>The dissolve from <code>SURVEYED</code> to <code>RESOLVED</code> is the signature moment. Budget 400 ms.</p>
+<p>Implement it as <strong>incremental frame edits to a resident image</strong> (T-C1), never as a retransmit. Kitty's animation commands allow editing an existing frame with rectangular blocks and setting per-frame gaps in milliseconds, including gapless frames used purely as composition bases. The dissolve is therefore a sequence of dirty-rect updates to an image already resident in the terminal, which composes directly with termforge's damage tracking: <em>one damage model spanning both text and pixels</em>. That unification is the technical story of the project.</p>
+<table class="table">
+<thead><tr><th style="width:12%">t (ms)</th><th style="width:22%">Stage</th><th>What the player sees</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>Plate resident, fully masked</td><td>Nothing yet. Plate is transmitted once, gapless base frame composed.</td></tr>
+<tr><td>0–160</td><td>Ordered dither reveal, 8 frames of ~20 ms</td><td>The plate appears through a seeded ordered-dither mask; glyphs are still on top.</td></tr>
+<tr><td>160–300</td><td>Glyph attrition, 4 frames</td><td>Wireframe characters are cleared in reverse structural order — noise first, frame last.</td></tr>
+<tr><td>300–400</td><td>Tint drain</td><td>Cell backgrounds fade to transparent; the plate is the only thing left.</td></tr>
+</tbody>
+</table>
+<p>Total wire cost is ~13 dirty-rect edits, not 13 plate transmissions. The dissolve is skippable by keypress — it is a reward, not a cutscene — and skipping jumps to the final composition rather than accelerating the frames.</p>
+
+<h3>7.5 The evidence log</h3>
+<p>The log uses <strong>Unicode placeholders</strong>: image ID encoded in the cell's foreground colour, <code>U+10EEEE</code> plus row/column diacritics. Salvaged documents therefore scroll as genuine text with inline images, participating in reflow and scrollback. termforge already supports this, tmux-first.</p>
+<p>A recovered manifest with the cargo-seal photograph sitting inside the paragraph, scrolling with it, is the screenshot that sells the project. Build it in M1, not M2.</p>
+
+<h3>7.6 Art plates: three layers, one resident image</h3>
+<p>Fixed <strong>4 colours + transparent</strong>, 1-bit ordered dither. Aesthetic discipline and payload discipline are the same decision here, and the palette is authored once and checked in as part of the pack manifest.</p>
+<p>Art is <strong>composed, never enumerated</strong>. Baking socket configuration into whole tiles would multiply out to thousands of plates — 8 archetypes × 3 damage states × 16 exterior-edge combinations × door positions × variants. Instead the three lower bands each carry one factor, so the asset count stays additive:</p>
+<table class="table">
+<thead><tr><th style="width:16%">Band</th><th style="width:22%">Carries</th><th style="width:14%">Count</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td><code>Layer::hull</code></td><td>Structural shell: exterior wall, bulkhead and door pieces, per edge kind per orientation</td><td>~12 pieces</td><td>Reused by every compartment on every ship. Drawn from the tile's socket signature (§6.1).</td></tr>
+<tr><td><code>Layer::plate</code></td><td>Interior art, archetype × damage</td><td>24 plates</td><td>The original inventory, unchanged.</td></tr>
+<tr><td><code>Layer::overlay</code></td><td>Decals: bloodied, scorched, flooded</td><td>~8 decals</td><td>A bloodied hallway is a hallway plate <em>plus</em> a decal, never a second plate.</td></tr>
+</tbody>
+</table>
+<p><strong>Composition happens once, at load, into a single resident image per compartment.</strong> This is the load-bearing implementation rule: the dissolve (§7.4) then edits one resident image with dirty rects exactly as specified, T-C1 needs no change, and the bandwidth budget in §7.7 holds unaltered. Compositing at dissolve time instead — three images animating in lockstep — would triple the wire cost of the signature moment and is explicitly not the design.</p>
+
+<h3>7.7 Bandwidth budget</h3>
+<p>A session must stay playable over ssh. This is a design constraint from day one, not an optimisation pass, and it needs a meter (T-H4) to be real.</p>
+<table class="table">
+<thead><tr><th style="width:40%">Budget</th><th style="width:18%">Limit</th><th>Basis</th></tr></thead>
+<tbody>
+<tr><td>Sustained</td><td>250 KB / min</td><td>Comfortable on a 1 Mbit link with headroom for latency spikes.</td></tr>
+<tr><td>Single dissolve burst</td><td>40 KB</td><td>~13 dirty-rect edits over 400 ms.</td></tr>
+<tr><td>One plate, transmitted once</td><td>≤ 8 KB on the wire</td><td>240 × 160 px, 4-colour indexed, PNG-compressed, base64 overhead included.</td></tr>
+<tr><td>Whole pack, worst case</td><td>≤ 200 KB per session</td><td>24 plates, transmitted lazily on first need, resident afterwards.</td></tr>
+<tr><td>Idle frame</td><td>≤ 2 KB</td><td>Cell damage only; no image traffic when nothing resolved.</td></tr>
+</tbody>
+</table>
+<p>CI asserts these against the meter using the replay corpus, so a regression is a failed test rather than a bad ssh session.</p>
+
+<h3>7.8 Image lifecycle</h3>
+<p>Per spec, clear-screen and main↔alt-screen transitions must clear images. Get placement and deletion lifecycle correct in M0 or you will chase ghost images for a month: write the lifecycle tests <em>before</em> the game logic exists (T-D1). Minimum coverage — clear-screen mid-dissolve, alt-screen leave/return with plates resident, SIGWINCH mid-dissolve, quota exhaustion with an eviction while a dissolve is in flight, and process death mid-transmission.</p>
+
+<h2 style="break-before:page">8 · Screen specification</h2>
+<p>The region tables are normative; the figures are cell-accurate renderings of them, reproduced at reduced type size. Origin is <code>(col, row)</code>, zero-indexed, top-left. The reference grid is exactly 120 × 40. Terminals larger than the floor letterbox the view and keep it centred; the layout never reflows.</p>
+
+<h3>8.1 SHIP — region table</h3>
+<table class="table">
+<thead><tr><th style="width:22%">Region</th><th style="width:14%">Origin</th><th style="width:14%">Extent</th><th>Contents</th></tr></thead>
+<tbody>
+<tr><td>Hull view</td><td>(0, 0)</td><td>120 × 33</td><td>Deck plan: three bands of compartment boxes, 22 × 9 each, at columns 0, 24, 48, 72, 96.</td></tr>
+<tr><td>Band 1 (forward)</td><td>(—, 0)</td><td>— × 9</td><td>Bridge · Comms · Medbay · Berth A · Berth B</td></tr>
+<tr><td>Trunk gutter</td><td>(—, 9)</td><td>— × 2</td><td>Vertical connectors at box-centre columns 10, 34, 58, 106.</td></tr>
+<tr><td>Band 2 (main)</td><td>(—, 11)</td><td>— × 9</td><td>Fwd airlock · Galley · Hold 1 · Hold 2 · Aft airlock</td></tr>
+<tr><td>Trunk gutter</td><td>(—, 20)</td><td>— × 2</td><td>Connectors at columns 58, 82.</td></tr>
+<tr><td>Band 3 (lower aft)</td><td>(48, 22)</td><td>46 × 9</td><td>Pump bay · Engine room</td></tr>
+<tr><td>Rule</td><td>(0, 33)</td><td>120 × 1</td><td>Soot line. Divides hull from bezel.</td></tr>
+<tr><td>Ledger strip</td><td>(0, 34)</td><td>120 × 2</td><td>Three pending commit slots, 39 cells each, separated by <code>│</code> at columns 39 and 79.</td></tr>
+<tr><td>Rule</td><td>(0, 36)</td><td>120 × 1</td><td>—</td></tr>
+<tr><td>Console</td><td>(0, 37)</td><td>120 × 3</td><td>Charge gauge (24 cells), location readout, instrument lamps, key legend.</td></tr>
+</tbody>
+</table>
+<p>Compartment boxes are 22 × 9 with a one-cell frame; the interior is 20 × 7. Horizontal adjacency is drawn as <code>──</code> in the two-cell gutter at the band's vertical midline; vertical adjacency as <code>│</code> in the trunk gutters. Every edge in the hull graph must be drawable under these rules — the generator's embedder is constrained by the renderer, deliberately.</p>
+
+<h3>8.2 SHIP — mid-run, mixed states</h3>
+<figure>
+<pre style="font-size:9.1px;line-height:1.17;background:var(--color-neutral-900);color:var(--color-neutral-200);padding:var(--space-4) var(--space-3);border-radius:var(--radius-md);overflow:hidden;letter-spacing:0">╔═[ BRIDGE ]═════════╗  ┌─[ COMMS ]──────────┐  ┌─[ MEDBAY ]─────────┐  ░▒▓▒░░▓▒░▒▓░░▒▒▓░▒░▓▒  ▒░░▓▒▒░▓░▒░▓▓▒░░▒▓▒░░
+║▓▒░░▒▓█▓▒░▒▓▓▒░▒▓▒░▒║  │····················│  │····················│  ▒░▓▒░░▒▓░▒▒░▓▒░░▓▒░▒▓  ░▓▒░▒▓░░▒▒▓░▒░▓▒▒░░▓▒
+║▒░▒▓██▓▒▒░░▒▓█▓▒░▒▓▒║  │··◆·················│  │·········◆··········│  ▓░▒ B?RTH ?A ▒░▓▒░░▒▓  ▒▓░░▒ ?E?TH ▒▓░▒░░▓▒▒
+║░▒▓█▓▒░▒▓▓▒░▒▓█▓▒░▒▓║  │·······┬────┬·······│  │····┬───────┬·······│  ░▒▓▒░▒▓░░▒▓▒░▒░▓▒▒░░▓  ▓▒░▒░▓▒░░▒▓░▒▓░░▒▒▓░▒
+║▒▓▓▒░░▒▓█▓▒▒░▒▓▒░░▒▒║──│·······│    │·······│──│····│·······│·······│──░▒░▓▒░▒▒▓░░▒▓▒░▓░▒▒▓─░▒▓░▒░▒▓▓░▒░░▓▒░▒▓░▒░
+║▓▒░▒▓▓▒░▒▓█▓▒░▒▓▒░▓▓║  │·······└────┘·······│  │····└───────┘·······│  ▒▓░▒░ ?ERT? ░▒▓░▒░▒▓░  ░▒▓▒░▒░▓▒░▓▒░░▒▓▒░▓▒
+║▒░░▒▒▓▓▒░░▒▓▒░▒▒▓▓▒░║  │···········◆········│  │····················│  ░▓▒░▒▓▒░░▓▒░▒▓░░▒▒▓▒░  ▒░▓░▒▒▓░░▒▓▒░▓░▒▒░▓▒
+║▓▓▒▒░░░▒▒▓▓▓▒▒░░▒▒▓▓║  │····················│  │····················│  ▓▒░░▒▓░▒░▓▒▒░░▓▒░▒▓░▒  ▓░▒▒░▓▒░▒░▓▒▒░▓░▒░▒▓
+╚════════════════════╝  └────────────────────┘  └────────────────────┘  ░▒▓░▒░▓▒░░▒▓▒░▒▓░░▒▒▓  ░▒▓▒░░▓▒░▒▓░▒░▒▓▒░░▓
+          │                       │                       │                                              │
+          │                       │                       │                                              │
+░▒▓▒░░▓▒░▒▓░░▒▒▓░▒░▓▒  ┌─[ GALLEY ]─────────┐  ┌─[ HOLD 1 ]───DMG───┐  ╔═[ HOLD 2 ]══BREACH═╗  ▒░░▓▒▒░▓░▒░▓▓▒░░▒▓▒░░
+▒░▓▒░░▒▓░▒▒░▓▒░░▓▒░▒▓  │····················│  │▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒│  ║░▒▓█▓▒░▒▓▓▒░▒▓█▓▒░▒▓║  ░▓▒░▒▓░░▒▒▓░▒░▓▒▒░░▓▒
+▒░▒ A?RL?CK ▒░▓▒░░▒▓░  │·······◆············│  │▒▒▒◆▒▒▒▒▒▒▒▒▒▒▒◆▒▒▒▒│  ║▒░▒▓██▓▒▒░░▒▓█▓▒░▒▓▒║  ▓░▒ ?IRLO?K ▒░▓▒░░▒▓
+░▒▓▒░▒▓░░▒▓▒░▒░▓▒▒░░▓  │····┬─────────┬·····│  │▒▒┌────────────┐▒▒▒▒│  ║▓▒░░▒▓█▓▒░▒▓▓▒░▒▓▒░▒║  ░▒▓▒░▒▓░░▒▓▒░▒░▓▒▒░░
+▒▓░▒░▒▓▓░▒░░▓▒░▒▓░▒░─│····│         │·····│──│▒▒│ ▚▚ 3 EVID ▚ │▒▒▒▒│──║░▒▓▒░▒▓█▓▒░▒▒▓▒░░▒▓▒║──▒▓░▒░▒▓▓░▒░░▓▒░▒▓░▒░
+░▒▓░▒░▒▓▒░░▒▓▒░▓░▒▒▓░  │····└─────────┘·····│  │▒▒└────────────┘▒▒▒▒│  ║▒▓▓▒░░▒▓█▓▒▒░▒▓▒░░▒▒║  ░▒▓▒░▒░▓▒░▓▒░░▒▓▒░▓▒
+▓▒░░▒▓░▒░▓▒▒░░▓▒░▒▓░▒  │··········◆·········│  │▒▒▒▒▒▒▒◆▒▒▒▒▒▒▒▒▒▒▒▒│  ║▓▒░▒▓▓▒░▒▓█▓▒░▒▓▒░▓▓║  ▒░▓░▒▒▓░░▒▓▒░▓░▒▒░▓▒
+░▒▓░▒░▓▒░░▒▓▒░▒▓░░▒▒▓  │····················│  │▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒│  ║▒░░▒▒▓▓▒░░▒▓▒░▒▒▓▓▒░║  ▓░▒▒░▓▒░▒░▓▒▒░▓░▒░▒▓
+▒▓░▒░▓▒░▒▒▓░░▒▓▒░▓░▒▒  └────────────────────┘  └────────────────────┘  ╚════════════════════╝  ░▒▓▒░░▓▒░▒▓░▒░▒▓▒░░▓
+                                                          │                       │
+                                                          │                       │
+                                                ┌─[ PUMP BAY ]───DMG─┐  ▒░░▓▒▒░▓░▒░▓▓▒░░▒▓▒░░
+                                                │····················│  ░▓▒░▒▓░░▒▒▓░▒░▓▒▒░░▓▒
+                                                │·······◆············│  ▓░▒ ?NGIN? ▒░▓▒░░▒▓░▒
+                                                │····················│  ░▒▓▒░▒▓░░▒▓▒░▒░▓▒▒░░
+                                                │··········──────────│──▒▓░▒░▒▓▓░▒░░▓▒░▒▓░▒░
+                                                │····················│  ░▒▓▒░▒░▓▒░▓▒░░▒▓▒░▓▒
+                                                │····················│  ▒░▓░▒▒▓░░▒▓▒░▓░▒▒░▓▒
+                                                │····················│  ▓░▒▒░▓▒░▒░▓▒▒░▓░▒░▒▓
+                                                └────────────────────┘  ░▒▓▒░░▓▒░▒▓░▒░▒▓▒░░▓
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  1 ▸ QUINT · HOLD 2 · STOW             │  2 ▸ ACHEBE · HOLD 2 · FIGHT FIRE     │  3 ▸ ── empty ──
+      ┗ pinned by E01 E02               │      ┗ pinned by E03 E04 E12          │
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  CHARGE ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒  74/120 SC       R07 HOLD 1 · DAMAGED · 3 EVIDENCE · 2 EXITS
+  LAMP ●   DECRYPTER ●   OSSUARY TAG ●              [e] examine   [SPACE] hold to aim   [R] resolve   [L] log   [?] manual</pre>
+<figcaption>Fig. 6 — SHIP, 120 × 40, mid-run. Bridge and Hold 2 are <code>RESOLVED</code> (art plates below the backgrounds); Comms, Medbay, Galley, Hold 1 and Pump bay are <code>SURVEYED</code> (wireframe plus damage tint, <code>◆</code> evidence markers); the remaining five are <code>UNKNOWN</code> glyph noise with half-legible archetype fragments.</figcaption>
+</figure>
+
+<h3>8.3 One compartment, three states</h3>
+<figure>
+<pre style="font-size:11.5px;line-height:1.25;background:var(--color-neutral-900);color:var(--color-neutral-200);padding:var(--space-4) var(--space-3);border-radius:var(--radius-md)">   UNKNOWN                  SURVEYED                  RESOLVED
+   ░▒▓▒░░▓▒░▒▓░░▒▒▓░▒░▓▒    ┌─[ HOLD 1 ]───DMG───┐    ╔═[ HOLD 1 ]═════════╗
+   ▒░▓▒░░▒▓░▒▒░▓▒░░▓▒░▒▓    │▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒│    ║▓▒░░▒▓█▓▒░▒▓▓▒░▒▓▒░▒║
+   ▓░▒ H?LD ?1 ▒░▓▒░░▒▓░    │▒▒▒◆▒▒▒▒▒▒▒▒▒▒▒◆▒▒▒▒│    ║▒░▒▓██▓▒▒░░▒▓█▓▒░▒▓▒║
+   ░▒▓▒░▒▓░░▒▓▒░▒░▓▒▒░░▓    │▒▒┌────────────┐▒▒▒▒│    ║░▒▓█▓▒░▒▓▓▒░▒▓█▓▒░▒▓║
+   ▒▓░▒░▒▓▓░▒░░▓▒░▒▓░▒░▒    │▒▒│ ▚▚ 3 EVID ▚ │▒▒▒▒│    ║▒▓▓▒░░▒▓█▓▒▒░▒▓▒░░▒▒║
+   ░▒▓░▒░▒▓▒░░▒▓▒░▓░▒▒▓░    │▒▒└────────────┘▒▒▒▒│    ║▓▒░▒▓▓▒░▒▓█▓▒░▒▓▒░▓▓║
+   ▓▒░░▒▓░▒░▓▒▒░░▓▒░▒▓░▒    │▒▒▒▒▒▒▒◆▒▒▒▒▒▒▒▒▒▒▒▒│    ║▒░░▒▒▓▓▒░░▒▓▒░▒▒▓▓▒░║
+   ░▒▓░▒░▓▒░░▒▓▒░▒▓░░▒▒▓    │▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒│    ║▓▓▒▒░░░▒▒▓▓▓▒▒░░▒▒▓▓║
+   ▒▓░▒░▓▒░▒▒▓░░▒▓▒░▓░▒▒    └────────────────────┘    ╚════════════════════╝
+   glyph band only           glyph + tint bands        plate band; glyphs cleared
+   no image placement        ▒ = damage tint in the    frame is part of the art,
+   fragments almost legible  cell background, not text not text</pre>
+<figcaption>Fig. 7 — The three resolution states of one compartment, at 22 × 9. This progression is the entire game expressed as a rendering fact.</figcaption>
+</figure>
+
+<h3>8.4 LOG — region table and figure</h3>
+<table class="table">
+<thead><tr><th style="width:22%">Region</th><th style="width:14%">Origin</th><th style="width:14%">Extent</th><th>Contents</th></tr></thead>
+<tbody>
+<tr><td>Header</td><td>(0, 0)</td><td>120 × 2</td><td>Case name, filter state, item count.</td></tr>
+<tr><td>Scroll</td><td>(0, 2)</td><td>120 × 36</td><td><code>TextBox</code> scrollback. Body text wraps at 96 cells; images are Unicode placeholders inline in the flow.</td></tr>
+<tr><td>Console</td><td>(0, 38)</td><td>120 × 2</td><td>Filter keys, scroll position, exit.</td></tr>
+</tbody>
+</table>
+<figure>
+<pre style="font-size:9.6px;line-height:1.24;background:var(--color-neutral-900);color:var(--color-neutral-200);padding:var(--space-4) var(--space-3);border-radius:var(--radius-md);overflow:hidden">  EVIDENCE LOG · COLD LANTERN · 11 of 16 items examined · filter: ALL                              ▲ 3 above
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  E02 · MANIFEST · R07 HOLD 1 · read at 41 SC remaining
+      Stowage authority, sheet 3 of 4. Bills of lading for the aft hold, countersigned. The supercargo's
+      chop is pressed into the wax at the foot of the sheet, and the seal number does not appear anywhere
+      in the declared cargo list:
+      ▚▚▚▚▚▚▚▚▚▚▚▚▚▚▚▚  ◀ inline image, U+10EEEE placeholder, scrolls with the paragraph
+      ▚▚▚▚▚▚▚▚▚▚▚▚▚▚▚▚     image id in the cell foreground colour; reflows, survives scrollback
+      ▚▚▚▚▚▚▚▚▚▚▚▚▚▚▚▚
+      — the chop is Quint's. Whatever went into Hold 2 went in under her authority.
+
+  E04 · PHYSICAL TRACE · R08 HOLD 2 · spectral lamp · read at 38 SC remaining
+      Discharge pattern on the aft bulkhead, sprayed upward from about hand height, then abandoned
+      mid-sweep. Somebody stood here and fought this fire until they could not.
+
+  E18 · PERSONAL EFFECT · R08 HOLD 2 · read at 35 SC remaining
+      A left-cuff engineer's glove, scorched on the palm, lying eleven feet from the corpse.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  [j/k] scroll  [a] filter by actor  [r] by room  [t] by kind  [/] search  [Esc] back                     ▼ 2 below</pre>
+<figcaption>Fig. 8 — LOG, scroll region cropped to 24 rows. The <code>▚</code> blocks stand for real inline images; in the running game they are Kitty Unicode placeholders participating in text reflow.</figcaption>
+</figure>
+
+<h3>8.5 AIM — the commit overlay</h3>
+<p>Centred 72 × 20 at origin (24, 10), drawn on <code>Layer::overlay</code>. Opened by the <em>press</em> of <kbd>Space</kbd>, closed by its <em>release</em>. This is the one interaction that genuinely requires the Kitty keyboard protocol.</p>
+<figure>
+<pre style="font-size:11.5px;line-height:1.3;background:var(--color-neutral-900);color:var(--color-neutral-200);padding:var(--space-4) var(--space-3);border-radius:var(--radius-md)">        ┌─[ ASSERT ]──────────────────────────── slot 3 of 3 ──┐
+        │                                                      │
+        │   ACTOR      ◂  OSRIC BEHN · mate                 ▸   │
+        │   WHERE      ◂  R01 COMMS · intact · surveyed     ▸   │
+        │   DOING      ◂  BROADCAST                         ▸   │
+        │                                                      │
+        │   ── supporting ────────────────────────────────────  │
+        │   E10  log fragment · decrypter · distress traffic,   │
+        │        mate's authentication                          │
+        │                                                      │
+        │   ── contradicting ────────────────────────────────   │
+        │   none                                                │
+        │                                                      │
+        │   Release SPACE to commit.  Esc aborts, no charge.    │
+        │   Batch resolves when all three slots are filled.     │
+        │                                                      │
+        └──────────────────────────────────────────────────────┘</pre>
+<figcaption>Fig. 9 — AIM overlay, 72 × 20. "Supporting" lists items the player has already logged whose facts intersect the triple; it never evaluates correctness. Nothing here tells the player they are right.</figcaption>
+</figure>
+<p>The supporting/contradicting panel is a memory aid over the player's own log, computed by fact intersection. It must never consult <code>Veracity</code> or <code>Truth</code> — that would leak the answer and gut P3. This is the single most important firewall in the UI layer, and it gets a test.</p>
+
+<h3>8.6 LOADOUT and DEBRIEF</h3>
+<table class="table">
+<thead><tr><th style="width:16%">Mode</th><th style="width:22%">Region</th><th style="width:12%">Origin</th><th style="width:12%">Extent</th><th>Contents</th></tr></thead>
+<tbody>
+<tr><td rowspan="4"><code>LOADOUT</code></td><td>Masthead</td><td>(0, 0)</td><td>120 × 4</td><td>Vessel name, last known position, mass/power gauges.</td></tr>
+<tr><td>Instrument list</td><td>(0, 4)</td><td>58 × 30</td><td><code>ListWidget</code>; six instruments, cost and selection state.</td></tr>
+<tr><td>Detail panel</td><td>(60, 4)</td><td>60 × 30</td><td>Selected instrument: what it reads, what it cannot.</td></tr>
+<tr><td>Console</td><td>(0, 34)</td><td>120 × 6</td><td>Remaining mass/power, board confirmation (irreversible).</td></tr>
+<tr><td rowspan="4"><code>DEBRIEF</code></td><td>Masthead</td><td>(0, 0)</td><td>120 × 5</td><td>Outcome: reconstruction percentage, cause of run end.</td></tr>
+<tr><td>Score table</td><td>(0, 5)</td><td>72 × 24</td><td>Commits locked / failed, charge spent by category, seed.</td></tr>
+<tr><td>Plate gallery</td><td>(72, 5)</td><td>48 × 24</td><td>Thumbnails of every plate the player earned. The trophy case.</td></tr>
+<tr><td>Console</td><td>(0, 29)</td><td>120 × 11</td><td>Replay path, verification hash, daily-seed submission, exit.</td></tr>
+</tbody>
+</table>
+
+<h2 style="break-before:page">9 · Input</h2>
+<p>Keyboard only. Mouse may be supported but must never be required. All input flows through the recordable event stream (T-F1) — including the aim gesture, which means the gesture is replayable at event granularity rather than reconstructed from timings.</p>
+<table class="table">
+<thead><tr><th style="width:16%">Key</th><th style="width:14%">Event</th><th style="width:14%">Mode</th><th>Action</th></tr></thead>
+<tbody>
+<tr><td><kbd>h j k l</kbd> / arrows</td><td>press, repeat</td><td>SHIP</td><td>Move the cursor along hull-graph edges. Repeat events are accepted; each step costs charge.</td></tr>
+<tr><td><kbd>Enter</kbd></td><td>press</td><td>SHIP</td><td>Survey the compartment under the cursor (8 SC). No-op if already surveyed.</td></tr>
+<tr><td><kbd>Tab</kbd></td><td>press</td><td>SHIP</td><td>Cycle evidence markers within the current compartment.</td></tr>
+<tr><td><kbd>e</kbd></td><td>press</td><td>SHIP</td><td>Examine the selected evidence item (3 SC; 2 SC to re-read).</td></tr>
+<tr><td><kbd>Space</kbd></td><td><strong>press</strong></td><td>SHIP → AIM</td><td>Open the aim overlay, pre-filled with the cursor's compartment.</td></tr>
+<tr><td><kbd>h l</kbd> / <kbd>j k</kbd></td><td>press, repeat</td><td>AIM</td><td>Cycle the value / the field of the triple under construction.</td></tr>
+<tr><td><kbd>Space</kbd></td><td><strong>release</strong></td><td>AIM → SHIP</td><td>Commit the triple to the pending slot. The gesture is the mechanic: you hold your breath and let go.</td></tr>
+<tr><td><kbd>Esc</kbd></td><td>press</td><td>AIM</td><td>Abort, free of charge, even while <kbd>Space</kbd> is still held.</td></tr>
+<tr><td><kbd>1 2 3</kbd></td><td>press</td><td>SHIP</td><td>Select or clear a pending slot.</td></tr>
+<tr><td><kbd>R</kbd></td><td>press</td><td>SHIP</td><td>Resolve the batch. Enabled only with three filled slots. Confirmation modal — this is irreversible.</td></tr>
+<tr><td><kbd>L</kbd> / <kbd>i</kbd> / <kbd>?</kbd></td><td>press</td><td>SHIP</td><td>Log / instrument panel / manual.</td></tr>
+<tr><td><kbd>q</kbd></td><td>press</td><td>any</td><td>Quit. Confirmation modal; writes the replay before exit.</td></tr>
+</tbody>
+</table>
+<p><strong>Gesture rules.</strong> Repeat events inside AIM never advance a field more than one step per event. A release arriving without its matching press (focus loss, protocol renegotiation) aborts rather than commits — fail toward the state that costs the player nothing. If the terminal stops reporting release events mid-session, the session pauses to a modal and refuses to continue: a silent downgrade here would let a player commit by accident, which violates P3 in the worst possible way.</p>
+
+<h2>10 · Audio</h2>
+
+<h3>10.1 Tier ruling</h3>
+<p>You asked whether audio is tier 1 or tier 2. The answer follows from the loop: OBSCURA is turn-based, every state change is legible in the render bands, and nothing is time-critical. Audio therefore carries <strong>atmosphere and confirmation, never information</strong>.</p>
+<div style="background:var(--color-surface);border-radius:calc(var(--radius-lg) * 1.15);padding:var(--space-4) var(--space-6);margin:var(--space-3) 0 var(--space-4);break-inside:avoid">
+<p style="margin:0"><strong>Ruling.</strong> The <em>sink interface</em> is tier 1 and lands in M1 with a <code>NullSink</code>, so call sites exist and are exercised from the beginning. The <em>RtAudio implementation</em> is tier 2 and lands in M2 behind a CMake option. <strong>No mechanical fact may be conveyed by audio alone</strong>, and CI proves it by running the replay corpus with audio compiled out and asserting identical state hashes (§3.5).</p>
+</div>
+<p>This is a deliberate trade: the DOS-era austerity that makes the game feel like an instrument also means it reads correctly in silence, over ssh, in a shared office. Atmosphere is a large upside — a low hull drone under the survey loop and a single dry mechanical report on a locked batch will carry more dread than any sting — but it is upside, not foundation.</p>
+
+<h3>10.2 Where RtAudio can live</h3>
+<p>termforge's dependency policy is <strong>stdlib-only at runtime — no third-party deps in the shipped library</strong>. RtAudio is a third-party dependency, so it cannot go into <code>termforge::lib</code> without breaking that policy, and that policy is one of the library's better decisions. The split:</p>
+<table class="table">
+<thead><tr><th style="width:26%">Component</th><th style="width:22%">Home</th><th>Rationale</th></tr></thead>
+<tbody>
+<tr><td><code>AudioSink</code> interface + <code>NullSink</code></td><td>termforge (ticket T-G1)</td><td>Pure virtual, stdlib-only, zero deps. Satisfies issue-#212's actual intent: interface now, mixer later.</td></tr>
+<tr><td><code>RtAudioSink</code></td><td>Separate optional target, <code>termforge-audio-rtaudio</code></td><td>Its own CMake project, <code>FetchContent</code>-ed by consumers who want it. termforge's policy holds; OBSCURA gets a real mixer.</td></tr>
+<tr><td>Process-boundary sink (<code>paplay</code>/<code>pw-play</code>)</td><td>termforge examples (T-G3)</td><td>Kept as the zero-dependency reference implementation and as the fallback when no audio target is built.</td></tr>
+</tbody>
+</table>
+<p>If the separate-target overhead is unwelcome, the acceptable alternative is for <code>RtAudioSink</code> to live in OBSCURA's <code>src/audio/</code>. What is <em>not</em> acceptable is a third-party dependency inside termforge's shipped library.</p>
+
+<h3>10.3 RtAudio design</h3>
+<figure>
+<pre style="font-size:10.5px;line-height:1.5;background:var(--color-surface);padding:var(--space-4) var(--space-6);border-radius:var(--radius-md);color:var(--color-neutral-800)">struct AudioSink {                                  // tier 1, stdlib only
+  virtual ~AudioSink() = default;
+  virtual void play(SoundId, Millibels gain) = 0;    // integer gain: no floats in game code
+  virtual void stop_all() = 0;
+  virtual std::optional&lt;Diagnostic&gt; poll() = 0;      // device errors surface here, on the game thread
+};
+
+// Game thread            lock-free SPSC ring (64 slots)          RtAudio callback thread
+// play(SoundId, gain) ──▶ [cmd][cmd][cmd] ──────────────────────▶ drain, mix 16 voices, write
+//                         atomic head/tail, fixed capacity        no alloc, no lock, no log, no sim reads</pre>
+<figcaption>Fig. 10 — Audio sink interface and the thread boundary.</figcaption>
+</figure>
+<table class="table">
+<thead><tr><th style="width:24%">Concern</th><th>Decision</th></tr></thead>
+<tbody>
+<tr><td>Stream format</td><td>48 kHz, stereo, <code>SINT16</code>, 256-frame buffer (~5 ms). Assets are pre-decoded to 48 kHz mono at pack-bake time; no runtime decode.</td></tr>
+<tr><td>Mixer</td><td>Fixed 16 voices, integer accumulate into <code>int32</code>, saturating store. Oldest-voice steal on overflow.</td></tr>
+<tr><td>Callback contract</td><td>No allocation, no locking, no logging, no exceptions, no access to simulation state. Enforced by review and by a comment block that says exactly this at the top of the callback.</td></tr>
+<tr><td>Device selection</td><td>Enumerate, prefer default output. On open failure, construct <code>NullSink</code> instead and surface a <code>Diagnostic</code> — mirroring termforge's degradation-as-events. Audio failure never ends a session.</td></tr>
+<tr><td>Errors from the callback</td><td>Written to the ring's return channel and drained by <code>poll()</code> on the game thread. RtAudio's error callback never throws into the audio thread.</td></tr>
+<tr><td>Flags</td><td><code>--no-audio</code> forces <code>NullSink</code>. <code>OBSCURA_AUDIO=ON</code> by default in release, <code>OFF</code> in CI.</td></tr>
+<tr><td>Determinism</td><td>Audio state is write-only from the game's perspective. Nothing in <code>src/world/</code> may include an audio header; the purity gate enforces it.</td></tr>
+</tbody>
+</table>
+
+<h3>10.4 Sound inventory (M2)</h3>
+<p>Small, dry, mechanical. Sixteen cues, no music bed except one continuous hull drone whose gain tracks depth into the hull.</p>
+<table class="table">
+<thead><tr><th style="width:30%">Cue</th><th style="width:18%">Trigger</th><th>Character</th></tr></thead>
+<tbody>
+<tr><td>Hull drone (loop)</td><td>Session</td><td>Continuous, gain rises with compartments surveyed. The only sustained sound.</td></tr>
+<tr><td>Survey firm-up</td><td>UNKNOWN → SURVEYED</td><td>Relay click plus a short pressure sigh.</td></tr>
+<tr><td>Dissolve</td><td>RESOLVED</td><td>400 ms, tuned to the frame schedule in §7.4. The one moment allowed to be beautiful.</td></tr>
+<tr><td>Batch locked / failed</td><td>Resolve</td><td>One dry mechanical report either way. <em>Identical</em> in length and level — the sound must not disclose which commit failed.</td></tr>
+<tr><td>Charge threshold</td><td>≤ 20 SC</td><td>Suit alarm, once, not a loop. Never a nag.</td></tr>
+<tr><td>Narrator lines</td><td>Authored beats</td><td>Pre-rendered TTS, off by default pending DR-04.</td></tr>
+</tbody>
+</table>
+
+<h2 style="break-before:page">11 · Asset pipeline</h2>
+<p>Everything generated offline. Nothing generated at runtime. The runtime is a pure deterministic C++ program with all generative work confined to offline content production.</p>
+<table class="table">
+<thead><tr><th style="width:20%">Asset</th><th style="width:18%">Source</th><th>Processing</th></tr></thead>
+<tbody>
+<tr><td>Art plates</td><td>venice image</td><td>Deterministic quantise + ordered dither to the fixed 4-colour palette; PNG-compressed. 24 interior plates, ~12 shell pieces, ~8 decals — composed at load (§7.6), never enumerated.</td></tr>
+<tr><td>Narrator lines</td><td>venice TTS</td><td>Pre-rendered per authored line, 48 kHz mono, normalised, trimmed.</td></tr>
+<tr><td>Ambience, cues</td><td>venice music/SFX</td><td>Normalised, trimmed, loop points marked in the manifest.</td></tr>
+<tr><td>Trailer</td><td>venice video</td><td>Marketing only. Never played in the grid.</td></tr>
+</tbody>
+</table>
+<p>Baked into a versioned pack with a manifest hash. The manifest declares each entry's <strong>stable integer ID</strong> and its socket signature and weight; both are covered by the hash, so a replay can never be reinterpreted against shifted tile IDs. The build verifies the hash; the replay records it as <code>build_id</code>, so a replay that no longer verifies can be distinguished from a replay recorded against different assets. <code>tools/venice-bake/</code> is checked in and the bake is reproducible: same inputs, same bytes.</p>
+
+<h3>11.1 Instruments</h3>
+<p>Pre-board, choose against a shared mass/power budget: <strong>6 mass, 4 power</strong>. Each instrument gates a slice of the evidence set via <code>Evidence::requires_</code>, so a loadout is a bet about what kind of incident this is — the deckbuilding decision, made once per run under uncertainty.</p>
+<table class="table">
+<thead><tr><th style="width:20%">Instrument</th><th style="width:8%">Mass</th><th style="width:8%">Power</th><th>Effect</th></tr></thead>
+<tbody>
+<tr><td>Spectral lamp</td><td>2</td><td>1</td><td>Reveals <code>physical_trace</code> evidence otherwise invisible.</td></tr>
+<tr><td>Decrypter</td><td>1</td><td>2</td><td>Recovers text from corrupted <code>log_fragment</code> items.</td></tr>
+<tr><td>Thermal tap</td><td>2</td><td>1</td><td>Makes <code>damage_pattern</code> evidence readable.</td></tr>
+<tr><td>Auto-scribe</td><td>1</td><td>1</td><td>Free re-read of any logged item.</td></tr>
+<tr><td>Resonator</td><td>2</td><td>2</td><td>Reveals compartment adjacency without surveying.</td></tr>
+<tr><td>Ossuary tag</td><td>1</td><td>0</td><td>Identifies a <code>corpse</code> actor and role at no charge cost.</td></tr>
+</tbody>
+</table>
+<p><strong>Fairness rule.</strong> Daily-seed mode uses a fixed, published loadout so the leaderboard compares reasoning rather than unlock progress. Unlocks apply to free-play only. Case 001's published loadout is <em>spectral lamp + decrypter + ossuary tag</em> (mass 4, power 3), which leaves <code>damage_pattern</code> evidence visible but unreadable — the teaching beat that instruments gate content.</p>
+
+<h2>12 · termforge work plan</h2>
+<p>Grouped as epics; each ticket is small enough to land in one sitting with a test. Four already exist upstream and are marked as such.</p>
+<div style="background:var(--color-surface);border-radius:calc(var(--radius-lg) * 1.15);padding:var(--space-4) var(--space-6);margin:var(--space-3) 0 var(--space-4);break-inside:avoid">
+<h4 style="margin-top:0">The implementer files these</h4>
+<p style="margin-bottom:0">The Claude Code session is authorised to open feature-request tickets against termforge directly. It should file the T-series itself rather than waiting on a human, following the protocol in §12.1 — <strong>search before filing</strong>, one ticket per unit of work, acceptance criteria that a test can satisfy. Filing a ticket is not the same as landing it: library work still lands in termforge, on its own branch, under termforge's conventions and both-compiler verification.</p>
+</div>
+
+<h3>12.1 Ticket-filing protocol</h3>
+<ol>
+<li><strong>Deduplicate first.</strong> Search open issues for the facility, not the ticket name. #91 (capability floor), #97 (setup/teardown hooks), #100 (image cell rows) and #102 (<code>fill_rect</code> intersect) already exist — comment on those with the OBSCURA use case instead of opening near-duplicates. Issue numbers currently run to #102; the frequently cited "#212" does not exist, so T-G1 is a new filing.</li>
+<li><strong>One ticket, one landable change.</strong> If a ticket cannot be described by a single acceptance sentence with a test behind it, split it.</li>
+<li><strong>Body shape</strong> — four short sections, no more: <em>Motivation</em> (what an application cannot do today, with the concrete call site), <em>Proposed API</em> (signatures, not prose), <em>Acceptance</em> (the assertion a test will make), <em>Notes</em> (protocol references, affected drivers, whether it is an API break).</li>
+<li><strong>Respect the library's rules in the proposal itself.</strong> No third-party dependency in the shipped library; degradation is an event, never a silent downgrade; drivers emit bytes verbatim and sanitisation stays in the renderer; capability requirements are pinned, never emulator versions. A ticket that violates one of these will be closed, correctly.</li>
+<li><strong>Host-neutral bodies.</strong> Same text works for <code>gh issue create</code> and <code>tea issue create</code>. Mirror every body into <code>docs/tickets/T-XX.md</code> in the OBSCURA repo so the plan survives a host migration and issue IDs are never the source of truth (DR-10).</li>
+<li><strong>Label</strong> <code>enhancement</code> for new facilities, and reference the milestone it blocks (M0–M4) in the body, not in the title.</li>
+<li><strong>Attribution.</strong> Agent-authored commits carry the model trailer termforge's conventions require. The same honesty applies to tickets: say that the request comes from the OBSCURA flagship work.</li>
+<li><strong>Do not file speculative tickets.</strong> If OBSCURA can be built without it, it is not a ticket yet. T-C3 and T-D4 are explicitly marked optional for this reason.</li>
+</ol>
+<table class="table">
+<thead><tr><th style="width:8%">Ticket</th><th style="width:30%">Title</th><th style="width:12%">Blocks</th><th>Acceptance</th></tr></thead>
+<tbody>
+<tr><td colspan="4" style="background:var(--color-accent-100);font-family:var(--font-body);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.09em;padding:6px 0 5px">Epic A — capability floor and app lifecycle</td></tr>
+<tr><td>T-A1</td><td>Capability requirements: declare a floor, refuse to start below it <span style="color:var(--color-accent-2-700)">· exists as #91</span></td><td>M0</td><td>An app declares required capabilities; unmet requirements return an error before alt-screen entry, with the probe response attached.</td></tr>
+<tr><td>T-A2</td><td>Virtual <code>setup</code>/<code>teardown</code> hooks for App subclasses <span style="color:var(--color-accent-2-700)">· exists as #97</span></td><td>M0</td><td>Subclass resources are released on every exit path including the exception path; test asserts cooked mode restored.</td></tr>
+<tr><td>T-A3</td><td>Minimum grid size requirement, and a pause-to-modal when a resize drops below it</td><td>M1</td><td>Below-floor resize raises an event; the app can hold a modal until restored; no partial render at the smaller size.</td></tr>
+<tr><td>T-A4</td><td>Query the cell rows/cols an <code>Image</code> occupied <span style="color:var(--color-accent-2-700)">· exists as #100</span></td><td>M0</td><td>Both library examples stop guessing; placement arithmetic has one source of truth.</td></tr>
+<tr><td colspan="4" style="background:var(--color-accent-100);font-family:var(--font-body);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.09em;padding:6px 0 5px">Epic B — explicit layer model</td></tr>
+<tr><td>T-B1</td><td>Named layer API over raw z-index, including the below-background threshold</td><td>M0</td><td>No application writes <code>-1073741825</code>. The sentinel appears once in the library. Offline byte tests assert band order.</td></tr>
+<tr><td>T-B2</td><td>Per-layer damage tracking, so a tint change does not re-emit plates</td><td>M0</td><td>Dirtying one band emits bytes only for that band; measured by T-H4's meter in the test.</td></tr>
+<tr><td colspan="4" style="background:var(--color-accent-100);font-family:var(--font-body);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.09em;padding:6px 0 5px">Epic C — animation and incremental image edits</td></tr>
+<tr><td>T-C1</td><td>Edit rectangular blocks of a resident image frame</td><td>M0</td><td>A dirty-rect edit emits an animation command, not a retransmit. Byte-level offline test.</td></tr>
+<tr><td>T-C2</td><td>Per-frame gaps in ms, including gapless composition-base frames</td><td>M0</td><td>Frame schedule from §7.4 is expressible; gapless base frames verified.</td></tr>
+<tr><td>T-C3</td><td>Dissolve helper: mask-driven reveal over N frames</td><td>M0</td><td>Optional sugar. Ships only if the game's implementation proves reusable.</td></tr>
+<tr><td>T-C4</td><td>Compose N source images into one resident image before placement</td><td>M0</td><td>Shell + interior + decals resolve to a single resident image and a single ID, so the dissolve edits one image (§7.6). Test asserts one transmit, not three.</td></tr>
+<tr><td colspan="4" style="background:var(--color-accent-100);font-family:var(--font-body);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.09em;padding:6px 0 5px">Epic D — image lifecycle, atlas and transport</td></tr>
+<tr><td>T-D1</td><td>Explicit image lifecycle across clear-screen and main↔alt-screen transitions</td><td>M0</td><td>Lifecycle tests exist <em>before</em> game logic: clear mid-dissolve, alt-screen round trip, SIGWINCH mid-dissolve, eviction mid-dissolve.</td></tr>
+<tr><td>T-D2</td><td>Quota accounting and eviction policy hooks</td><td>M1</td><td>Quota exhaustion is an event, not a corrupt screen. Policy is injectable.</td></tr>
+<tr><td>T-D3</td><td>Asset pack / image atlas manager: residency, ID allocation, eviction <span style="color:var(--color-neutral-600)">· partly landed</span></td><td>M1</td><td>Per-region stable IDs and LRU already exist; this generalises them to a named pack with an explicit residency API.</td></tr>
+<tr><td>T-D5</td><td>Author-declared metadata on atlas entries, carried through the manifest hash</td><td>M3</td><td>Stable integer IDs plus opaque per-entry metadata (OBSCURA stores socket signatures and weights). The library never interprets it; it guarantees the IDs and the hash coverage.</td></tr>
+<tr><td>T-D4</td><td>Shared-memory transfer path for large plates</td><td>M3</td><td>Opt-in; falls back to base64 with an event. Nice-to-have, not on the critical path.</td></tr>
+<tr><td colspan="4" style="background:var(--color-accent-100);font-family:var(--font-body);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.09em;padding:6px 0 5px">Epic E — Kitty keyboard protocol</td></tr>
+<tr><td>T-E1</td><td>Negotiate progressive enhancement with <code>report-event-types</code>; restore on teardown</td><td>M1</td><td>Flags pushed on setup, popped on teardown, including the exception path. Never left enabled on exit.</td></tr>
+<tr><td>T-E2</td><td>Surface press / repeat / release with disambiguated modifiers</td><td>M1</td><td>Event carries type and modifier mask; offline tests over recorded byte sequences from real emulators.</td></tr>
+<tr><td>T-E3</td><td>Report protocol loss mid-session as an event</td><td>M1</td><td>An app can refuse to continue rather than silently reverting to press-only.</td></tr>
+<tr><td colspan="4" style="background:var(--color-accent-100);font-family:var(--font-body);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.09em;padding:6px 0 5px">Epic F — deterministic input replay</td></tr>
+<tr><td>T-F1</td><td>Record and play back the coroutine event stream</td><td>M2</td><td>A recorded session replays identically headless. This is a testing primitive for the whole library, not just for OBSCURA.</td></tr>
+<tr><td>T-F2</td><td>Injectable clock for headless playback</td><td>M2</td><td>No wall-clock reads in the event loop when a clock is supplied.</td></tr>
+<tr><td>T-F3</td><td>Golden-corpus harness in the test support library</td><td>M2</td><td>Any app can point the harness at a corpus directory and get one CTest case per file.</td></tr>
+<tr><td colspan="4" style="background:var(--color-accent-100);font-family:var(--font-body);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.09em;padding:6px 0 5px">Epic G — audio sink</td></tr>
+<tr><td>T-G1</td><td><code>AudioSink</code> interface + <code>NullSink</code>, stdlib-only <span style="color:var(--color-neutral-600)">· the real content of "#212"</span></td><td>M1</td><td>Header + null implementation, no third-party dependency, no policy break.</td></tr>
+<tr><td>T-G2</td><td><code>RtAudioSink</code> as a separate optional target</td><td>M2</td><td>Own CMake project; consumers <code>FetchContent</code> it. termforge's stdlib-only guarantee is untouched.</td></tr>
+<tr><td>T-G3</td><td>Process-boundary sink as the zero-dependency reference</td><td>M2</td><td>Shells to <code>pw-play</code>/<code>paplay</code>; documented as the fallback, not the plan.</td></tr>
+<tr><td colspan="4" style="background:var(--color-accent-100);font-family:var(--font-body);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.09em;padding:6px 0 5px">Epic H — findings from this design pass</td></tr>
+<tr><td>T-H4</td><td>Bytes-per-frame meter on the driver, readable by the app</td><td>M0</td><td>The KB/minute budget becomes a test rather than a hope. Cheap; do it first.</td></tr>
+<tr><td>T-H5</td><td>Expose cell pixel geometry (and its change on resize/font change)</td><td>M0</td><td>Plate sizing needs it. Verify whether the existing pixel-region plumbing already answers this before writing code.</td></tr>
+<tr><td>T-H6</td><td>Sanitisation boundary review for leaderboard-supplied names</td><td>M4</td><td>Escape stripping stays in the renderer, never the driver. Add a test with a hostile player name.</td></tr>
+<tr><td>T-H1</td><td><code>fill_rect</code> should use <code>Rect::intersect</code> <span style="color:var(--color-accent-2-700)">· exists as #102</span></td><td>M0</td><td>Dirty-rect clipping correctness; OBSCURA's dissolve leans on it.</td></tr>
+</tbody>
+</table>
+
+<h2 style="break-before:page">13 · Milestones and gates</h2>
+<p>Each milestone is a gate. Do not begin the next until the current one is honestly passed. The M-series is the game; the T-series above is the library. The critical correction to draft v1 is that <strong>M0 is mostly library work</strong> — do it in termforge's own examples, not in a game repository that does not exist yet.</p>
+
+<h3>13.1 Dependency matrix</h3>
+<table class="table">
+<thead><tr><th style="width:14%">Milestone</th><th style="width:36%">Required tickets</th><th>Cannot start without</th></tr></thead>
+<tbody>
+<tr><td>M0</td><td>T-A1, T-A2, T-A4, T-B1, T-B2, T-C1, T-C2, T-C4, T-D1, T-H1, T-H4, T-H5</td><td>Nothing. Start here, in termforge.</td></tr>
+<tr><td>M1</td><td>T-A3, T-D2, T-D3, T-E1, T-E2, T-E3, T-G1</td><td>M0 gate passed — the dissolve must feel good first.</td></tr>
+<tr><td>M2</td><td>T-F1, T-F2, T-F3, T-G2, T-G3</td><td>M1 gate passed — it must be fun before there is more of it.</td></tr>
+<tr><td>M3</td><td>T-D5, T-D4 (optional)</td><td>M2 gate passed. Nothing here is on the critical path to shipping.</td></tr>
+<tr><td>M4</td><td>T-H6</td><td>M3, or M3 abandoned — see below.</td></tr>
+</tbody>
+</table>
+
+<h3>13.2 The milestones</h3>
+<table class="table">
+<thead><tr><th style="width:10%">M</th><th style="width:26%">Scope</th><th style="width:30%">Gate question</th><th>Exit criteria</th></tr></thead>
+<tbody>
+<tr><td><strong>M0</strong><br>render spike</td><td>Five bands composited correctly in a termforge example. One static art plate. One resolve dissolve via incremental frame edits. Image lifecycle tests passing across clear-screen and alt-screen transitions. Bytes-per-frame meter live.</td><td><em>Does the dissolve feel good?</em> This is the whole thesis. If it does not land, the concept is wrong and stopping here costs a week.</td><td>All five bands demonstrably ordered; dissolve at 400 ms under 40 KB; lifecycle suite green; meter reporting; no game code written.</td></tr>
+<tr><td><strong>M1</strong><br>the fun test</td><td><strong>One hand-authored case</strong> (Appendix A). No generator, no meta progression, no leaderboard, fixed loadout. Ship view, log with inline images, aim gesture, batch-of-three, budget economy. Playable start to finish in 30–45 min. <code>NullSink</code> in place.</td><td><em>Is it fun?</em> Hand it to three people who did not build it. If the answer is no, stop and rethink the loop. Building a constraint solver before this gate is the single most likely way this project dies.</td><td>Case 001 completable and losable; three external players finish a session; session length in range; determinism corpus green with one recorded replay.</td></tr>
+<tr><td><strong>M2</strong><br>content and consequence</td><td>Five authored cases. Instrument loadout system. Full budget economy with batch verification. Replay recording and playback. RtAudio backend. In-game manual.</td><td><em>Does case 5 still feel fresh after case 1?</em> If authored cases do not sustain interest, a generator will not save it.</td><td>Five cases with distinct incident archetypes; replays verify server-side offline; audio-off hashes identical; five replay fixtures in the corpus.</td></tr>
+<tr><td><strong>M3</strong><br>generator and solver</td><td>Procedural truth generation, evidence derivation, redaction, and a solver that <em>proves</em> deduction-solvability before a seed is served. Layout validity is no longer part of this: the tile grammar (§6.1) makes an illegal ship unrepresentable rather than rejected, so M3 is one hard problem plus arithmetic instead of two hard problems.</td><td><em>Can the solver reject unsolvable seeds at acceptable cost?</em> Two sub-questions: does every commit keep a served chain after redaction, and is the cheapest chain-collecting route affordable within the starting charge?</td><td>Solver produces a chain table like Appendix A's for every served seed, within a stated time budget, with a rejection rate that is measured rather than assumed. <strong>Route-cost feasibility check:</strong> because door adjacency is guaranteed connected, the minimum charge cost of a route that surveys every chain-bearing compartment and reads its items is computable — redaction rejects any seed whose cheapest full-reconstruction route exceeds the starting charge plus expected refunds. "Is this seed fair?" becomes arithmetic.</td></tr>
+<tr><td><strong>M4</strong><br>the gathering</td><td>Daily seed, server-side re-simulation, leaderboard, public release.</td><td><em>Is the verification path actually unfakeable?</em></td><td>A tampered replay is rejected; a legitimate replay from a different build is distinguishable; hostile player names sanitised.</td></tr>
+</tbody>
+</table>
+<p><strong>The critical property of this ordering:</strong> if M3 never lands, you still have a finished, shippable game with five authored cases. The generator is upside, not foundation.</p>
+
+<h3>13.3 Test strategy</h3>
+<p>termforge's philosophy applies unchanged: <em>test how code fails, not just the happy path</em>. For OBSCURA the failures that matter are a dissolve interrupted by a resize, a batch resolved with a full log and an empty one, a replay recorded on one build and verified on another, and an evidence set whose redaction removed the only chain to a commit.</p>
+<table class="table">
+<thead><tr><th style="width:22%">Suite</th><th>Covers</th></tr></thead>
+<tbody>
+<tr><td>Determinism corpus</td><td>Every authored case, every bug report. Cross-compiler, cross-optimisation, audio-on/off.</td></tr>
+<tr><td>Sim purity lint</td><td>The <code>[SIM]</code> source set. Runs as a CTest case so it fails the build.</td></tr>
+<tr><td>Verification firewall</td><td>The AIM overlay's supporting/contradicting panel never reads <code>Veracity</code> or <code>Truth</code>. Asserted by making those members inaccessible from the UI layer <em>and</em> by a test.</td></tr>
+<tr><td>Redaction invariant</td><td>For every case, every commit in the solution key has at least one served chain under the published loadout.</td></tr>
+<tr><td>Render band ordering</td><td>Offline byte-level assertions against an in-memory sink. No live TTY in unit tests.</td></tr>
+<tr><td>Bandwidth</td><td>Corpus replayed against the meter; §7.7 limits are assertions.</td></tr>
+<tr><td>Terminal reality</td><td>Protocol changes need empirical verification on real emulators. The agent cannot see a terminal; a human runs the probe and reports the bytes.</td></tr>
+</tbody>
+</table>
+
+<h2>14 · Risks</h2>
+<table class="table">
+<thead><tr><th style="width:32%">Risk</th><th style="width:12%">Severity</th><th>Mitigation</th></tr></thead>
+<tbody>
+<tr><td><strong>termforge feature work is the critical path.</strong> Layers, animation edits and the keyboard protocol are all unlanded; M0 is library work wearing a game's clothes.</td><td style="color:var(--color-accent-700);font-weight:600">High</td><td>Named as such (§13.1). Build M0 inside termforge's examples where the tests already live. Do not start a game repository until the M0 gate passes.</td></tr>
+<tr><td>Generator cannot guarantee solvable-and-interesting puzzles</td><td style="color:var(--color-accent-700);font-weight:600">High</td><td>M3 is last. Authored cases ship without it. Precedent: the genre's best-known example was fully hand-authored for exactly this reason.</td></tr>
+<tr><td>Bandwidth over ssh</td><td>Medium</td><td>Hard KB/minute budget from M0, with a meter (T-H4) and CI assertions. Resolve granularity tuned against it.</td></tr>
+<tr><td>Image lifecycle bugs (ghost images)</td><td>Medium</td><td>Lifecycle tests in M0, before game logic exists.</td></tr>
+<tr><td>Deduction content is expensive to author</td><td>Medium</td><td>Accept it. Five good cases beat fifty generated ones. Appendix A is the template and the proof of effort.</td></tr>
+<tr><td>Scope creep into tactical combat</td><td>Medium</td><td>Explicit non-goal, §15.</td></tr>
+<tr><td>Solo-project attrition</td><td>Medium</td><td>M1 produces a complete playable thing in weeks. M0 is a week and answers the only question that matters.</td></tr>
+<tr><td>Kitty-only shrinks the audience to a rounding error</td><td>Low, accepted</td><td>Deliberate. The five-band model has no meaningful degraded form, and the audience for a DOS-era deduction game in a terminal already self-selects.</td></tr>
+</tbody>
+</table>
+
+<h2>15 · Non-goals</h2>
+<p>Written down so they do not get helpfully added later.</p>
+<ul>
+<li><strong>No real-time combat</strong> and no tactical layer. The tension is epistemic, not kinetic.</li>
+<li><strong>No synchronous multiplayer, no voice.</strong> Async daily seed only — a community-design choice, not a technical limitation.</li>
+<li><strong>No sixel fallback.</strong> Kitty only.</li>
+<li><strong>No LLM at runtime.</strong> Content generation is offline and checked in.</li>
+<li><strong>No mouse-required interaction.</strong></li>
+<li><strong>No complex script or text shaping.</strong> termforge does not do it and the game does not need it.</li>
+<li><strong>No un-resolve, no undo, no save scumming.</strong> One seed, one run.</li>
+<li><strong>No audio-only information.</strong> New in rev 2, and load-bearing for §10.</li>
+<li><strong>No runtime asset generation</strong> and no runtime dithering.</li>
+</ul>
+
+<h2 style="break-before:page">16 · Decision records</h2>
+<p>The open questions from draft v1, sharpened into records with tradeoffs and a decide-by milestone. Leanings are recorded; none of these is closed by this document except where marked <strong>decided</strong>.</p>
+<table class="table">
+<thead><tr><th style="width:7%">DR</th><th style="width:22%">Question</th><th style="width:30%">Tradeoff</th><th>Leaning / decide by</th></tr></thead>
+<tbody>
+<tr><td>01</td><td>Does batch size scale with difficulty, or stay at three?</td><td>Scaling gives a difficulty dial for free. Fixed keeps the gesture's feel identical across cases and keeps the ledger strip's layout fixed at 3 × 39 cells.</td><td>Fixed. Decide by M2 (case 5).</td></tr>
+<tr><td>02</td><td>One budget pool, or separate survey / failure pools?</td><td>Two pools tune the punishment for bad deduction independently of exploration. One pool is legible on a single gauge and makes every decision commensurable.</td><td>Start single. Revisit at M1 tuning only if playtests show players refusing to survey.</td></tr>
+<tr><td>03</td><td>How much of the incident should be reconstructable?</td><td>Full-reconstruction-only is brutal and ends most runs in failure. Partial credit gives a landing for a good-but-incomplete run and a mastery target above it.</td><td>Partial credit at 6 of 9 commits; full reconstruction as a rare mastery outcome. Decide by M1.</td></tr>
+<tr><td>04</td><td>Does the narrator help atmosphere or undercut the austerity?</td><td>A voice is atmosphere and accessibility. It also breaks the conceit that you are reading instruments, not being told a story.</td><td>Build it, ship it off by default, test in M2, cut without ceremony if it feels wrong.</td></tr>
+<tr><td>05</td><td>Is 12–24 compartments right?</td><td>More compartments means more survey cost and a longer session; fewer means the deduction space collapses. The screen also constrains it: the deck plan holds 15 boxes.</td><td>12 for case 1. Tune against the 30–45 min target in M1; the renderer caps it at 15 until the embedder gets smarter.</td></tr>
+<tr><td>06</td><td>Should <code>MISLEADING</code> evidence exist in case 1?</td><td>Introducing lies immediately teaches distrust before the player trusts anything. Withholding them makes case 2 a step change.</td><td>None in case 1; two <code>STALE</code> items instead. Introduce <code>MISLEADING</code> in case 2. Decided for case 1.</td></tr>
+<tr><td>07</td><td>Is audio tier 1 or tier 2?</td><td>Atmosphere is a large part of dread. But information in audio breaks ssh play, accessibility and the determinism story.</td><td><strong>Decided:</strong> interface tier 1 (M1), RtAudio tier 2 (M2), no audio-only information ever. §10.1.</td></tr>
+<tr><td>08</td><td>Where does RtAudio live?</td><td>In termforge it is convenient and breaks the stdlib-only guarantee. Outside it costs one more CMake project.</td><td><strong>Decided:</strong> separate optional target; interface only in termforge. §10.2.</td></tr>
+<tr><td>09</td><td>Does the replay record ticks or only input order?</td><td>Recording ticks reproduces animation exactly but makes wall-clock jitter part of the artifact. Input-order-only makes verification trivially machine-independent.</td><td><strong>Decided:</strong> input order only; the tick is cosmetic. §3.4.</td></tr>
+<tr><td>10</td><td>Public GitHub now, or private Gitea first?</td><td>Public early gets the blog-post audience and free scrutiny of the determinism claims. Private early lets M0 fail quietly, which matters when M0's gate is "does this feel good".</td><td>Private Gitea through the M0 gate; mirror public at M1. Keep ticket bodies platform-neutral and mirrored in <code>docs/tickets/</code> so IDs are not the source of truth.</td></tr>
+<tr><td>11</td><td>Epics with tickets, or tickets alone?</td><td>Epics survive re-planning; flat tickets are easier to pick up cold.</td><td>Epics A–H as above, tickets inside them. Refine ticket bodies in the first working session with the implementer.</td></tr>
+<tr><td>12</td><td>What is the minimum terminal, and what happens below it?</td><td>A smaller floor widens the audience and complicates every layout. A fixed reference grid makes the deck plan authorable.</td><td><strong>Decided:</strong> 120 × 40 floor, fixed reference grid, letterbox above, refuse below, pause-to-modal on shrink. §2.3.</td></tr>
+<tr><td>13</td><td>Are authored cases data files or C++ data?</td><td>A data format needs a parser, a schema, error handling and its own determinism story. C++ data is compile-time checked and has none of that, but no external author can write a case.</td><td><strong>Decided for now:</strong> C++ <code>constexpr</code> data under <code>cases/</code>. Revisit only when someone other than you authors a case.</td></tr>
+<tr><td>14</td><td>Does a commit assert <em>when</em>, as well as who/where/what?</td><td>Time turns a 3-tuple into a 4-tuple and roughly squares the assertion space — much harder, much more interesting. It also makes the aim overlay a fourth field.</td><td>Not in M1. Candidate difficulty axis for cases 3–5, and a natural "advanced" mode. Decide by M2.</td></tr>
+</tbody>
+</table>
+
+<sc-if value="{{ includeCase }}" hint-placeholder-val="{{ true }}">
+<h2 style="break-before:page">Appendix A · Case 001 — <span style="font-style:italic">Cold Lantern</span></h2>
+<p>The M1 case, authored in full so that the loop can be proven before a generator exists. Twelve compartments, seven crew, nine timesteps, twenty-two derived evidence items redacted to sixteen. The published loadout is <em>spectral lamp + decrypter + ossuary tag</em>. Everything here is normative content, not illustration: this is what <code>cases/case001_cold_lantern.cpp</code> encodes.</p>
+
+<h3>A.1 Hull</h3>
+<table class="table">
+<thead><tr><th style="width:8%">ID</th><th style="width:16%">Name</th><th style="width:14%">Archetype</th><th style="width:12%">Grid</th><th style="width:14%">Final damage</th><th>Adjacent</th></tr></thead>
+<tbody>
+<tr><td>R00</td><td>Bridge</td><td>bridge</td><td>(0, 0)</td><td>intact</td><td>R01, R05</td></tr>
+<tr><td>R01</td><td>Comms</td><td>comms</td><td>(24, 0)</td><td>intact</td><td>R00, R04, R06</td></tr>
+<tr><td>R04</td><td>Medbay</td><td>medbay</td><td>(48, 0)</td><td>intact</td><td>R01, R02, R07</td></tr>
+<tr><td>R02</td><td>Berth A</td><td>berth</td><td>(72, 0)</td><td>intact</td><td>R04, R03</td></tr>
+<tr><td>R03</td><td>Berth B</td><td>berth</td><td>(96, 0)</td><td>intact</td><td>R02, R09</td></tr>
+<tr><td>R05</td><td>Fwd airlock</td><td>airlock</td><td>(0, 11)</td><td>intact</td><td>R00, R06</td></tr>
+<tr><td>R06</td><td>Galley</td><td>galley</td><td>(24, 11)</td><td>intact</td><td>R05, R01, R07</td></tr>
+<tr><td>R07</td><td>Hold 1</td><td>hold</td><td>(48, 11)</td><td><strong>damaged</strong></td><td>R06, R04, R08, R10</td></tr>
+<tr><td>R08</td><td>Hold 2</td><td>hold</td><td>(72, 11)</td><td><strong>breached</strong></td><td>R07, R09, R11</td></tr>
+<tr><td>R09</td><td>Aft airlock</td><td>airlock</td><td>(96, 11)</td><td>intact</td><td>R08, R03</td></tr>
+<tr><td>R10</td><td>Pump bay</td><td>engineering</td><td>(48, 22)</td><td><strong>damaged</strong></td><td>R07, R11</td></tr>
+<tr><td>R11</td><td>Engine room</td><td>engineering</td><td>(72, 22)</td><td>intact</td><td>R10, R08</td></tr>
+</tbody>
+</table>
+<p>Fifteen edges, every one drawable under §8.1's rules. Engineering is aft and low, the bridge is forward, both airlocks sit on the hull boundary, and no berth opens into a hold.</p>
+
+<h3>A.2 Crew and root cause</h3>
+<p><strong>Root cause:</strong> <code>contraband reaction</code>, origin R08 Hold 2. An undeclared oxidiser seal, stowed under the supercargo's authority at T0, reacted at T2. Fire spread forward into Hold 1 at T3; Hold 2 breached at T4.</p>
+<table class="table">
+<thead><tr><th style="width:8%">ID</th><th style="width:18%">Name</th><th style="width:14%">Role</th><th>Timeline — (T, room, action)</th></tr></thead>
+<tbody>
+<tr><td>A0</td><td>Ilse Vantner</td><td>Master</td><td>T0–T4 R00 bridge; <strong>T5 R00 vent</strong>; T6–T7 → R05, T8 R05 abandon</td></tr>
+<tr><td>A1</td><td>Osric Behn</td><td>Mate</td><td>T0–T3 R00; T4 → R01, <strong>T4 R01 broadcast</strong>; T6–T7 → R05, T8 R05 abandon</td></tr>
+<tr><td>A2</td><td>Duna Karr</td><td>Engineer</td><td>T0–T2 R10 pump bay; <strong>T3 R10 isolate</strong>; T6 → R11, T7 → R08 (breached, suited), T8 R09 abandon</td></tr>
+<tr><td>A3</td><td>Fen Achebe</td><td>Oiler</td><td>T0–T1 R11 engine room; T2 → R08; <strong>T3 R08 fight_fire</strong>; <strong>T4 R08 die</strong></td></tr>
+<tr><td>A4</td><td>Tobin Reyes</td><td>Medic</td><td>T0–T2 R04 medbay; T3 → R07; T5 → R04; <strong>T6 R04 treat</strong>; T7–T8 → R05 abandon</td></tr>
+<tr><td>A5</td><td>Marisol Quint</td><td>Supercargo</td><td><strong>T0 R08 stow</strong>; T1 → R07; T3 → R06; T6–T7 → R05; <strong>T8 R05 abandon</strong></td></tr>
+<tr><td>A6</td><td>Yeo Halim</td><td>Deckhand</td><td>T0 R06 galley; T1 → R07; <strong>T3 R07 seal</strong>; T5 → R04; T6 R04 (treated); T8 R05 abandon</td></tr>
+</tbody>
+</table>
+<p>Karr's exit at T7 crosses the breached Hold 2 in a suit. That transit is the case's best trap: it leaves an honest trace in the compartment where the corpse lies.</p>
+
+<h3>A.3 Solution key</h3>
+<table class="table">
+<thead><tr><th style="width:10%">Batch</th><th style="width:8%">#</th><th style="width:18%">Actor</th><th style="width:18%">Compartment</th><th style="width:16%">Action</th><th>Reading</th></tr></thead>
+<tbody>
+<tr><td rowspan="3">A</td><td>1</td><td>Quint</td><td>R08 Hold 2</td><td><code>stow</code></td><td>The contraband went in under her chop.</td></tr>
+<tr><td>2</td><td>Achebe</td><td>R08 Hold 2</td><td><code>fight_fire</code></td><td>Somebody stood and fought it.</td></tr>
+<tr><td>3</td><td>Achebe</td><td>R08 Hold 2</td><td><code>die</code></td><td>He did not leave.</td></tr>
+<tr><td rowspan="3">B</td><td>4</td><td>Halim</td><td>R07 Hold 1</td><td><code>seal</code></td><td>The bulkhead was dogged from the forward side — with Achebe behind it.</td></tr>
+<tr><td>5</td><td>Vantner</td><td>R00 Bridge</td><td><code>vent</code></td><td>The master vented Hold 1 to kill the fire.</td></tr>
+<tr><td>6</td><td>Behn</td><td>R01 Comms</td><td><code>broadcast</code></td><td>The mate sent the distress traffic.</td></tr>
+<tr><td rowspan="3">C</td><td>7</td><td>Karr</td><td>R10 Pump bay</td><td><code>isolate</code></td><td>The engineer isolated the pumps, which is why she was not in the hold.</td></tr>
+<tr><td>8</td><td>Reyes</td><td>R04 Medbay</td><td><code>treat</code></td><td>One patient, smoke inhalation, the deckhand.</td></tr>
+<tr><td>9</td><td>Quint</td><td>R05 Fwd airlock</td><td><code>abandon</code></td><td>She left with the boat, and with the second ledger.</td></tr>
+</tbody>
+</table>
+<p>Batch A alone is the incident. Batches A + B are the partial-credit ending (6 of 9, DR-03). All nine is full reconstruction: five compartments dissolve into plates, and the run ends with the ship legible.</p>
+
+<h3>A.4 Evidence served (16 of 22)</h3>
+<table class="table">
+<thead><tr><th style="width:6%">ID</th><th style="width:10%">Room</th><th style="width:14%">Kind</th><th style="width:12%">Requires</th><th style="width:8%">Verac.</th><th>Asserts / reads as</th></tr></thead>
+<tbody>
+<tr><td>E01</td><td>R08</td><td>cargo_seal</td><td>—</td><td>TRUE</td><td>(—, T0, R08, stow) · An undeclared oxidiser-class seal, stowed here.</td></tr>
+<tr><td>E02</td><td>R07</td><td>manifest</td><td>—</td><td>TRUE</td><td>(Quint, ANY, ANY, stow) · Stowage authority, her chop in the wax; the seal number is not in the declared list.</td></tr>
+<tr><td>E03</td><td>R08</td><td>corpse</td><td>ossuary tag</td><td>TRUE</td><td>(Achebe, ANY, R08, die) · Male, oiler's belt. <em>Without the tag: unidentified.</em></td></tr>
+<tr><td>E04</td><td>R08</td><td>physical_trace</td><td>spectral lamp</td><td>TRUE</td><td>(—, ANY, R08, fight_fire) · Extinguisher discharge from hand height, abandoned mid-sweep.</td></tr>
+<tr><td>E05</td><td>R11</td><td>personal_effect</td><td>—</td><td>TRUE</td><td>(Achebe, ANY, R11, ANY) · Oiler's tally board, shift signed on.</td></tr>
+<tr><td>E06</td><td>R07</td><td>damage_pattern</td><td><strong>thermal tap</strong></td><td>TRUE</td><td>(—, T3, R07, ANY) · <strong>Unreadable in case 1.</strong> Visible as a marker you cannot open — the teaching beat.</td></tr>
+<tr><td>E07</td><td>R07</td><td>physical_trace</td><td>spectral lamp</td><td>TRUE</td><td>(Halim, ANY, R07, seal) · Palm salts on the dog-lever. One set of hands.</td></tr>
+<tr><td>E08</td><td>R06</td><td>personal_effect</td><td>—</td><td><strong>STALE</strong></td><td>(Halim, ANY, R06, ANY) · Half-finished provision list. True at T0; says nothing about where he was at T3.</td></tr>
+<tr><td>E09</td><td>R00</td><td>log_fragment</td><td>decrypter</td><td>TRUE</td><td>(Vantner, T5, R00, vent) · "MASTER: VENTING HOLD 1 ON MY ORDER".</td></tr>
+<tr><td>E10</td><td>R01</td><td>log_fragment</td><td>decrypter</td><td>TRUE</td><td>(Behn, T4, R01, broadcast) · Distress traffic with the mate's authentication.</td></tr>
+<tr><td>E12</td><td>R10</td><td>physical_trace</td><td>spectral lamp</td><td>TRUE</td><td>(Karr, ANY, R10, isolate) · Valve wheel wiped clean, chalk mark on the isolation tag.</td></tr>
+<tr><td>E13</td><td>R11</td><td>personal_effect</td><td>—</td><td><strong>STALE</strong></td><td>(Karr, ANY, R11, ANY) · Engineer's tea can, still lashed. She passed through late, not early.</td></tr>
+<tr><td>E14</td><td>R04</td><td>log_fragment</td><td>decrypter</td><td>TRUE</td><td>(Reyes, T6, R04, treat) · "Smoke inhalation, one patient, deckhand."</td></tr>
+<tr><td>E16</td><td>R05</td><td>manifest</td><td>—</td><td>TRUE</td><td>(—, T8, R05, abandon) · Boat log: five out.</td></tr>
+<tr><td>E17</td><td>R05</td><td>personal_effect</td><td>—</td><td>TRUE</td><td>(Quint, T8, R05, abandon) · Supercargo's seal press, dropped in the cycle.</td></tr>
+<tr><td>E18</td><td>R08</td><td>personal_effect</td><td>—</td><td>TRUE</td><td>(Karr, ANY, R08, ANY) · A left-cuff engineer's glove, scorched palm, eleven feet from the corpse. <em>The trap.</em></td></tr>
+</tbody>
+</table>
+
+<h3>A.5 Redaction pass</h3>
+<p>Six of twenty-two derived items were cut. The rule applied: cut redundancy and cut frustration, never cut the last chain to a commit.</p>
+<table class="table">
+<thead><tr><th style="width:8%">Cut</th><th style="width:26%">Was</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>E11</td><td>Master's order book, R00</td><td>Redundant with E09, which is stronger and gated behind an instrument.</td></tr>
+<tr><td>E15</td><td>Soot transfer on the medbay cot rail</td><td>Redundant with E14 — "patient: deckhand" already identifies Halim uniquely.</td></tr>
+<tr><td>E19</td><td>Aft boat cycle log, R09</td><td>Pins a fact no commit needs. Its absence also leaves Karr's exit slightly mysterious, which is a feature.</td></tr>
+<tr><td>E20</td><td>Second contraband ledger, R03</td><td>Over-determines Quint. With E02 and E17 already serving, this made commit 1 free.</td></tr>
+<tr><td>E21</td><td>Reaction-origin burn pattern, R08</td><td>Requires the thermal tap, which is not in the published loadout. One unreadable item (E06) teaches the lesson; two is just tax.</td></tr>
+<tr><td>E22</td><td>Behn's trace in comms</td><td>Redundant with E10.</td></tr>
+</tbody>
+</table>
+
+<h3>A.6 Solvability proof</h3>
+<p>Each commit and the minimal served chain that pins it under the published loadout. This is the table M3's solver must produce mechanically for a generated seed.</p>
+<table class="table">
+<thead><tr><th style="width:6%">#</th><th style="width:20%">Chain</th><th>Argument</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>E01 ∩ E02</td><td>E01 places a stow of an undeclared seal in R08 at T0; E02 makes Quint the only actor with stowage authority. Intersection is unique.</td></tr>
+<tr><td>2</td><td>E04 ∩ E03 ∩ (E05, E12)</td><td>E04 establishes that someone fought the fire in R08. Two actors are placed in R08 by evidence: Achebe (E03) and Karr (E18). E12 places Karr in R10 doing <code>isolate</code>, and E05 places Achebe's shift in the adjacent R11. The firefighter is Achebe.</td></tr>
+<tr><td>3</td><td>E03 + ossuary tag</td><td>The corpse is in R08; the tag supplies identity and role. Without the tag this commit is unreachable — which is exactly why the tag is in the published loadout.</td></tr>
+<tr><td>4</td><td>E07</td><td>Palm salts on the dog-lever in R07, one set, Halim. E08 (stale) invites the wrong answer that he was in the galley; E07 outranks it because it is an instrument reading of the lever itself.</td></tr>
+<tr><td>5</td><td>E09</td><td>Direct, gated behind the decrypter.</td></tr>
+<tr><td>6</td><td>E10</td><td>Direct, gated behind the decrypter.</td></tr>
+<tr><td>7</td><td>E12</td><td>Direct. Also the load-bearing step of chain 2 — one item, two jobs, which is what good redaction leaves behind.</td></tr>
+<tr><td>8</td><td>E14</td><td>"One patient, deckhand" — Halim is the only deckhand in the crew list, which the player has from the roster.</td></tr>
+<tr><td>9</td><td>E17 ∩ E16</td><td>E17 places Quint's seal press in the forward airlock cycle; E16's "five out" confirms the boat left with five, so it was an abandon and not a body.</td></tr>
+</tbody>
+</table>
+<p><strong>Cost check.</strong> Served evidence sits in nine compartments: R08 (4 items), R07 (3), R11 (2), R05 (2), R10, R00, R01, R06, R04 (1 each). Surveying all nine costs 72 SC, movement about 16 SC, and reading all sixteen items 48 SC — 136 SC against a starting 120. One correct batch (+15) makes it reachable; two make it comfortable. The case therefore <em>requires</em> committing before the player feels ready, which is the intended pressure. Tune here first if M1 playtests feel either cruel or slack.</p>
+</sc-if>
+
+<h2 style="break-before:page">Appendix B · Glossary</h2>
+<table class="table">
+<thead><tr><th style="width:22%">Term</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td>Band</td><td>One of the five compositing planes in §7.1. Named in code via <code>Layer</code>, never as a raw z integer.</td></tr>
+<tr><td>Batch</td><td>Three pending commits. The unit of resolution and of punishment.</td></tr>
+<tr><td>Chain</td><td>A set of served evidence items whose facts intersect to pin exactly one commit. The solver's output unit.</td></tr>
+<tr><td>Charge (SC)</td><td>Suit charge. The single budget currency, integer.</td></tr>
+<tr><td>Commit</td><td>A player assertion: (actor, compartment, action). Permanent once resolved.</td></tr>
+<tr><td>Dissolve</td><td>The 400 ms transition from <code>SURVEYED</code> to <code>RESOLVED</code>. The thesis of the project.</td></tr>
+<tr><td>Plate</td><td>A 4-colour dithered art image for one archetype × damage state. 24 of them.</td></tr>
+<tr><td>Served set</td><td>The evidence remaining after redaction — what the player can actually find.</td></tr>
+<tr><td>Substrate</td><td>The glyph-noise fill of an <code>UNKNOWN</code> compartment. Seeded, so screenshots of a seed match.</td></tr>
+<tr><td>Truth</td><td>The fully specified causal history generated before any evidence exists. Never reachable from the UI layer.</td></tr>
+<tr><td>[SIM]</td><td>The source set subject to the determinism purity gate.</td></tr>
+</tbody>
+</table>
+
+<h2>Appendix C · Immediate next actions</h2>
+<ol>
+<li><strong>Have the implementer file epics A–H</strong> (§12) under the §12.1 protocol, and mirror the bodies into <code>docs/tickets/</code> so the plan does not depend on issue IDs. Four already exist upstream (#91, #97, #100, #102) and want an OBSCURA-use-case comment rather than a duplicate; there is no #212, so the audio interface is a fresh filing as T-G1.</li>
+<li><strong>Build M0 inside termforge's examples</strong>: five-band composite, one plate, one dissolve via incremental frame edits, lifecycle tests, bytes-per-frame meter. Do not create the OBSCURA repository yet.</li>
+<li><strong>Answer the M0 gate honestly.</strong> If the dissolve does not feel good, the concept is wrong and you have spent a week finding out.</li>
+<li><strong>Then</strong> create the OBSCURA repository per §2.4 and implement Appendix A as case 001 — the truth object, evidence set and redaction are already authored, so M1 is engineering, not design.</li>
+<li><strong>Instrument the render path for bandwidth from the first commit</strong>, and put §7.7's limits in CI before there is anything to regress.</li>
+</ol>
+
+<div style="margin-top:var(--space-8);padding-top:var(--space-3);border-top:4px solid var(--color-accent-300);font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);display:flex;justify-content:space-between">
+<div>OBSCURA · engineering design specification · rev 2.0</div><div>end of document</div>
+</div>
+
+</doc-page>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;docStatus&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Draft · for implementation&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Document control&quot;},&quot;includeCaseAppendix&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Document control&quot;},&quot;showAnnotations&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Document control&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      includeCase: this.props.includeCaseAppendix ?? true,
+      showAnnotations: this.props.showAnnotations ?? true,
+      docStatus: this.props.docStatus ?? "Draft · for implementation",
+    };
+  }
+}
+</script>
+</body>
+</html>

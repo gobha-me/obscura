@@ -6,11 +6,9 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <utility>
 
-#include <obscura/world/actors.hpp>
-#include <obscura/world/evidence.hpp>
-#include <obscura/world/hull.hpp>
+#include <obscura/world/projection.hpp>
+#include <obscura/world/truth.hpp>
 
 namespace obscura::world {
 
@@ -45,8 +43,8 @@ auto RedactionMask::fully_resolved() const -> bool {
 }
 
 auto project(const EvidenceSet& complete, const RedactionMask& mask)
-    -> EvidenceSet {
-  EvidenceSet visible{};
+    -> EvidenceProjectionSet {
+  EvidenceProjectionSet visible{};
   visible.reserve(complete.size());
 
   for (std::size_t index = 0; index < complete.size(); ++index) {
@@ -55,22 +53,22 @@ auto project(const EvidenceSet& complete, const RedactionMask& mask)
       continue;
     }
 
-    // Copy, then blank the fields this level does not cover. Copy-and-blank
-    // rather than build-up, so that a field added to Evidence later is redacted
-    // by default instead of leaking until someone remembers to handle it.
-    Evidence item = complete[index];
+    // Build up from a closed projection type. A field later added to Evidence
+    // remains hidden until it is deliberately copied here.
+    const Evidence& source = complete[index];
+    EvidenceProjection item{.id = source.id};
 
-    if (level < Fidelity::Full) {
-      item.when = 0;
+    if (level >= Fidelity::Partial) {
+      item.location = source.location;
+      item.kind = source.kind;
+      item.requires_ = source.requires_;
     }
-    if (level < Fidelity::Partial) {
-      item.kind = EvidenceKind::Trace;
-      item.where = kNoRoom;
-      item.subject = kNoActor;
-      item.label.clear();
+    if (level >= Fidelity::Full) {
+      item.asserts = source.asserts;
+      item.body = source.body;
     }
 
-    visible.push_back(std::move(item));
+    visible.push_back(item);
   }
 
   return visible;

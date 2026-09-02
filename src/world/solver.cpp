@@ -10,6 +10,8 @@
 #include <obscura/world/evidence.hpp>
 #include <obscura/world/hull.hpp>
 #include <obscura/world/incident.hpp>
+#include <obscura/world/model.hpp>
+#include <obscura/world/truth.hpp>
 
 namespace obscura::world {
 
@@ -17,28 +19,18 @@ auto solve(const Hull& hull, const Roster& roster, const EvidenceSet& evidence)
     -> Solution {
   Solution result{};
 
-  if (hull.room_count() == 0 || roster.size() == 0) {
+  if (hull.room_count() == 0 || roster.size() == 0 || evidence.empty() ||
+      evidence.front().asserts.empty()) {
     return result;
   }
 
-  // The scene and the tick come from the first Trace: a trace is the one kind
-  // that asserts "something happened here, then" without naming anyone, so it
-  // is what fixes the coordinates the candidates are tested against. Without
-  // one there is nothing to deduce and the honest answer is "broken", not
-  // "everyone".
-  const auto trace = std::ranges::find_if(evidence, [](const Evidence& item) {
-    return item.kind == EvidenceKind::Trace;
-  });
-
-  if (trace == evidence.end()) {
-    return result;
-  }
+  const Fact& anchor = evidence.front().asserts.front();
 
   for (const Actor& actor : roster.all()) {
     const Incident hypothesis{
         .culprit = actor.id,
-        .scene = trace->where,
-        .when = trace->when,
+        .scene = anchor.where,
+        .when = anchor.when,
     };
 
     const bool survives =

@@ -41,8 +41,11 @@
 #include <obscura/world/evidence.hpp>
 #include <obscura/world/hull.hpp>
 #include <obscura/world/incident.hpp>
+#include <obscura/world/model.hpp>
+#include <obscura/world/projection.hpp>
 #include <obscura/world/redaction.hpp>
 #include <obscura/world/solver.hpp>
+#include <obscura/world/truth.hpp>
 
 namespace obscura {
 

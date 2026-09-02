@@ -13,6 +13,7 @@
 
 #include <obscura/world/actors.hpp>
 #include <obscura/world/hull.hpp>
+#include <obscura/world/model.hpp>
 
 #include "derelict_alpha.hpp"
 

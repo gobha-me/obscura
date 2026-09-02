@@ -3,8 +3,10 @@
 
 #include <obscura/render/plates.hpp>
 
-#include <obscura/world/evidence.hpp>
-#include <obscura/world/redaction.hpp>
+#include <string>
+
+#include <obscura/world/model.hpp>
+#include <obscura/world/projection.hpp>
 
 namespace obscura::render {
 
@@ -12,17 +14,21 @@ namespace {
 
 auto kind_label(world::EvidenceKind kind) -> const char* {
   switch (kind) {
-    case world::EvidenceKind::Presence: return "PRESENCE";
-    case world::EvidenceKind::Absence: return "ABSENCE";
-    case world::EvidenceKind::Trace: return "TRACE";
-    case world::EvidenceKind::Testimony: return "TESTIMONY";
+    case world::EvidenceKind::log_fragment: return "LOG FRAGMENT";
+    case world::EvidenceKind::physical_trace: return "PHYSICAL TRACE";
+    case world::EvidenceKind::corpse: return "CORPSE";
+    case world::EvidenceKind::cargo_seal: return "CARGO SEAL";
+    case world::EvidenceKind::manifest: return "MANIFEST";
+    case world::EvidenceKind::damage_pattern: return "DAMAGE PATTERN";
+    case world::EvidenceKind::personal_effect: return "PERSONAL EFFECT";
   }
-  return "TRACE";
+  return "EVIDENCE";
 }
 
 } // namespace
 
-auto compose(const world::Evidence& item, world::Fidelity level) -> Plate {
+auto compose(const world::EvidenceProjection& item, world::Fidelity level)
+    -> Plate {
   Plate plate{};
 
   switch (level) {
@@ -36,12 +42,12 @@ auto compose(const world::Evidence& item, world::Fidelity level) -> Plate {
 
     case world::Fidelity::Partial:
       plate.lines.emplace_back(kind_label(item.kind));
-      plate.lines.emplace_back("room ??");
+      plate.lines.emplace_back("room " + std::to_string(item.location));
       break;
 
     case world::Fidelity::Full:
       plate.lines.emplace_back(kind_label(item.kind));
-      plate.lines.emplace_back(item.label);
+      plate.lines.emplace_back("entry " + std::to_string(item.body));
       break;
   }
 
