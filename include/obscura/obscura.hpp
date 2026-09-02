@@ -35,6 +35,7 @@
 #include <obscura/render/glyph_substrate.hpp>
 #include <obscura/render/log_view.hpp>
 #include <obscura/render/plates.hpp>
+#include <obscura/render/ship.hpp>
 #include <obscura/replay/player.hpp>
 #include <obscura/replay/recorder.hpp>
 #include <obscura/replay/state_hash.hpp>

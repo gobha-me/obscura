@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <cstdint>
+#include <optional>
 #include <type_traits>
 #include <vector>
 
@@ -111,6 +112,47 @@ TEST_CASE("projection cannot carry evidence correctness", "[world][firewall]") {
   CHECK(visible.front().asserts.front().what == Action::stow);
   CHECK(visible.front().requires_ == secret.requires_);
   CHECK(visible.front().body == secret.body);
+}
+
+TEST_CASE("hull distance rejects invalid and disconnected rooms",
+          "[world][distance][failure]") {
+  Hull hull{};
+  for (std::uint16_t room = 0; room < 5; ++room) {
+    REQUIRE(hull.add_room() == room);
+  }
+  hull.connect(0, 1);
+  hull.connect(1, 2);
+  hull.connect(0, 3);
+  hull.connect(3, 2);
+
+  CHECK_FALSE(hull.distance(ROOM_ANY, 0).has_value());
+  CHECK_FALSE(hull.distance(0, ROOM_ANY).has_value());
+  CHECK_FALSE(hull.distance(0, 4).has_value());
+  CHECK(hull.distance(2, 2) == std::optional<std::uint16_t>{0});
+  CHECK(hull.distance(0, 2) == std::optional<std::uint16_t>{2});
+  CHECK(hull.distance(2, 0) == std::optional<std::uint16_t>{2});
+}
+
+TEST_CASE("hull distance is independent of connection insertion order",
+          "[world][distance][determinism]") {
+  Hull ascending{};
+  Hull descending{};
+  for (std::uint16_t room = 0; room < 5; ++room) {
+    REQUIRE(ascending.add_room() == room);
+    REQUIRE(descending.add_room() == room);
+  }
+  ascending.connect(0, 1);
+  ascending.connect(1, 2);
+  ascending.connect(2, 3);
+  ascending.connect(3, 4);
+  descending.connect(3, 4);
+  descending.connect(2, 3);
+  descending.connect(1, 2);
+  descending.connect(0, 1);
+
+  for (std::uint16_t room = 0; room < 5; ++room) {
+    CHECK(ascending.distance(0, room) == descending.distance(0, room));
+  }
 }
 
 TEST_CASE("canonical records preserve dense source order", "[world][smoke]") {
