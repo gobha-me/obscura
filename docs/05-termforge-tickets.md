@@ -37,7 +37,7 @@ request belongs in a separate TermForge session.
 |---|---|---|---|
 | T-A1 | Capability floor: declare requirements, refuse to start | M0 | #91 ✅ landed |
 | T-A2 | Virtual setup/teardown hooks for App subclasses | M0 | #97 ✅ landed |
-| T-A3 | Minimum grid size requirement + pause-to-modal on shrink | M1 | #91 supplies the floor; OBSCURA #27 remains open |
+| T-A3 | Minimum grid size requirement + pause-to-modal on shrink | M1 | #91 supplies the floor; application policy implemented by OBSCURA #27 |
 | T-A4 | Query cell rows/cols an Image occupied | M0 | #100 ✅ landed |
 | T-B1 | Named layer API over raw z-index incl. below-background | M0 | #114 ✅ landed |
 | T-B2 | Per-layer damage tracking | M0 | #142 ✅ closed OBE; persistent pixels have independent damage |

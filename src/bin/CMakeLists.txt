@@ -18,4 +18,7 @@ if (TARGET ${PROJECT_NAME}::lib)
   target_link_libraries(${PROJECT_NAME}
     PRIVATE ${PROJECT_NAME}::lib
   )
+  target_compile_definitions(${PROJECT_NAME}
+    PRIVATE OBSCURA_WITH_APP=1
+  )
 endif ()

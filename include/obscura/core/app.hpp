@@ -40,6 +40,12 @@ class App : public termforge::App {
   App(App&&) = delete;
   auto operator=(App&&) -> App& = delete;
 
+  // Preserve TermForge's return values except for the one startup failure this
+  // application gives a process-level meaning: an unmet terminal floor is a
+  // configuration error (EX_CONFIG, 78). Exceptions still propagate after
+  // TermForge has restored the terminal.
+  auto run() -> int;
+
   [[nodiscard]] auto session() const -> const Session& { return m_session; }
   [[nodiscard]] auto ledger() const -> const Ledger& { return m_ledger; }
   [[nodiscard]] auto gesture_state() const noexcept -> input::GestureState {
@@ -59,6 +65,8 @@ class App : public termforge::App {
  private:
   auto apply_gesture_effect(input::GestureEffect effect) -> void;
   auto show_protocol_lost() -> void;
+  auto show_requirements_lost(const termforge::ErrorEvent& error) -> void;
+  auto hide_requirements_lost() -> void;
 
   Session m_session{};
   Ledger m_ledger{};
@@ -67,7 +75,13 @@ class App : public termforge::App {
       "INPUT PROTOCOL LOST",
       "Keyboard release reporting was lost. This run cannot continue safely.",
       "Exit run"};
+  termforge::MessageDialog m_requirements_lost{
+      "TERMINAL BELOW REQUIRED FLOOR",
+      "Restore the terminal to at least 120x40 cells with known cell geometry "
+      "of at least 6x12 pixels.",
+      "Waiting for resize"};
   bool m_protocol_lost_visible{false};
+  bool m_requirements_lost_visible{false};
 };
 
 } // namespace obscura::core

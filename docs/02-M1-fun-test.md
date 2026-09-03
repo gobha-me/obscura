@@ -38,10 +38,11 @@ T-G1 (`AudioSink` interface + `NullSink`, stdlib-only).
       The completed default-deny source/header firewall is proven by
       [PR #54](https://github.com/gobha-me/obscura/pull/54) and
       [PR #55](https://github.com/gobha-me/obscura/pull/55).
-- [ ] Refuse-to-start contract (spec §2.3): Kitty graphics with below-background
+- [x] Refuse-to-start contract (spec §2.3): Kitty graphics with below-background
       images, keyboard protocol with event types, >= 120x40 grid, known cell
       geometry >= 6x12 px. Exit 78 in cooked mode with the probe response.
-      Never enter alt-screen before the floor is verified.
+      Never enter alt-screen before the floor is verified
+      ([issue #27](https://github.com/gobha-me/obscura/issues/27)).
 
 ### World
 - [x] Types from spec §5 verbatim: `Compartment`, `Fact`, `Evidence`, `Actor`,
