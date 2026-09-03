@@ -1,7 +1,11 @@
 # M0 — Render spike
 
-**Where:** inside **termforge**, as an example plus tests. Do **not** create the
-OBSCURA repository yet.
+> **Status:** completed. This checklist is retained as the historical M0 gate
+> plan; current upstream and downstream ownership lives in
+> `05-termforge-tickets.md`.
+
+**Historical location:** inside **termforge**, as an example plus tests. The
+OBSCURA repository did not begin implementation until this gate passed.
 **Gate:** *Does the dissolve feel good?* This is the whole thesis. If it does not
 land, the concept is wrong and stopping here costs a week.
 **Estimate:** ~1 week of library work. Nothing here is game logic.
@@ -126,7 +130,7 @@ If nobody leans in, write down why and stop — the answer is worth a week eithe
 > and the room label remains glyph text after the noise clears. The plate asset
 > therefore stays archetype x damage and needs no re-bake.
 >
-> **Correction (2026-08-31).** This repo now requires termforge v0.57.20. The
+> **Correction (2026-08-31).** This repo now requires termforge v0.57.24. The
 > upstream facilities behind T-B1, T-B2, T-C1, T-C2, T-C4 and T-D1 are present:
 > named image regimes, persistent pixel damage separate from cell damage,
 > `edit_pinned()`, exact per-frame gaps (including zero), compose-then-submit as

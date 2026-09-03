@@ -49,8 +49,8 @@ em{font-style:italic}
 <table class="table" style="margin-bottom:var(--space-8)">
 <tbody>
 <tr><td style="width:20%;color:var(--color-neutral-600);text-transform:uppercase;letter-spacing:.07em;font-size:9px;padding-top:7px">Platform</td><td>Kitty graphics protocol only. No sixel path, no degraded mode, no undo.</td></tr>
-<tr><td style="color:var(--color-neutral-600);text-transform:uppercase;letter-spacing:.07em;font-size:9px;padding-top:7px">Stack</td><td>C++23 (GCC 13+ / Clang 17+), CMake ≥ 3.28, Catch2 v3, no package manager — <code>FetchContent</code> only.</td></tr>
-<tr><td style="color:var(--color-neutral-600);text-transform:uppercase;letter-spacing:.07em;font-size:9px;padding-top:7px">Library</td><td>termforge v0.1.7 consumed as <code>termforge::lib</code>; OBSCURA is a separate repository.</td></tr>
+<tr><td style="color:var(--color-neutral-600);text-transform:uppercase;letter-spacing:.07em;font-size:9px;padding-top:7px">Stack</td><td>C++23 (GCC 13+ / Clang 19+), CMake ≥ 3.28, Catch2 v3, no package manager — <code>FetchContent</code> only.</td></tr>
+<tr><td style="color:var(--color-neutral-600);text-transform:uppercase;letter-spacing:.07em;font-size:9px;padding-top:7px">Library</td><td>termforge v0.57.24 consumed as <code>termforge::lib</code>; v0.57.25 is available upstream but is not yet required.</td></tr>
 <tr><td style="color:var(--color-neutral-600);text-transform:uppercase;letter-spacing:.07em;font-size:9px;padding-top:7px">Audio</td><td>RtAudio, tier 2 (optional). Sink interface is tier 1. See §10.</td></tr>
 <tr><td style="color:var(--color-neutral-600);text-transform:uppercase;letter-spacing:.07em;font-size:9px;padding-top:7px">Implementer</td><td>Solo developer with Claude Code. Milestone task files ship alongside this document.</td></tr>
 <tr><td style="color:var(--color-neutral-600);text-transform:uppercase;letter-spacing:.07em;font-size:9px;padding-top:7px">Supersedes</td><td>OBSCURA design draft v1.</td></tr>
@@ -58,8 +58,8 @@ em{font-style:italic}
 </table>
 
 <div style="background:var(--color-surface);border-radius:calc(var(--radius-lg) * 1.15);padding:var(--space-4) var(--space-6);margin-bottom:var(--space-6);break-inside:avoid">
-<h4 style="margin-top:0">What changed from draft v1</h4>
-<p style="margin-bottom:0">Draft v1 assumed capabilities termforge does not expose yet. Reading the library at v0.1.7: the Kitty driver has base64/APC transmit, classic placement, Unicode placeholders and per-region image IDs with LRU eviction — but <strong>no layer API, no animation/frame-edit path, and no Kitty keyboard protocol</strong>. Three of the five bands in §7.1 and the entire commit gesture in §9 are unlanded library work. This document therefore splits the plan into a <strong>library track (T-series)</strong> and a <strong>game track (M-series)</strong>, with an explicit dependency matrix (§13.1). It also resolves the audio question, corrects the issue references (there is no #212; the repository's issues currently run to #102), and adds a worked, provably solvable authored case (Appendix A).</p>
+<h4 style="margin-top:0">What changed from draft v1 — and since</h4>
+<p style="margin-bottom:0">At rev 2, the v0.1.7 baseline lacked the layer, animation-edit and Kitty keyboard facilities this design needed. That discovery split the plan into a <strong>library track (T-series)</strong> and a <strong>game track (M-series)</strong>, with an explicit dependency matrix (§13.1). Those original dependencies have since landed, M0 passed, and OBSCURA is now implementing M1 against termforge v0.57.24. The public GitHub tracker is authoritative for live state; stable T-series identifiers here preserve the design intent.</p>
 </div>
 
 <h2 style="break-before:page">1 · Product definition</h2>
@@ -112,7 +112,7 @@ em{font-style:italic}
 <tbody>
 <tr><td><code>KittyDriver</code> — base64/APC transmit, classic cursor placement</td><td style="color:var(--color-accent-2-700);font-weight:600">Landed</td><td>Art plate transmission.</td></tr>
 <tr><td>Unicode placeholders (tmux-first)</td><td style="color:var(--color-accent-2-700);font-weight:600">Landed</td><td>The evidence log's inline images (§7.5) — the screenshot that sells the project.</td></tr>
-<tr><td>Stable per-region image IDs + LRU eviction</td><td style="color:var(--color-accent-2-700);font-weight:600">Landed</td><td>Plate residency; partial credit against ticket T-D3.</td></tr>
+<tr><td>Stable per-region image IDs + LRU eviction</td><td style="color:var(--color-accent-2-700);font-weight:600">Landed</td><td>TermForge supplies residency primitives; OBSCURA's downstream <code>EvidenceImageCache</code> owns the immediate T-D3 use case.</td></tr>
 <tr><td><code>App::on_tick(dt)</code>, <code>set_tick_hz</code>, <code>set_max_tick_dt</code></td><td style="color:var(--color-accent-2-700);font-weight:600">Landed</td><td>Fixed-step animation clock. Note: the clock drives <em>render only</em> (§3.4).</td></tr>
 <tr><td><code>Terminal</code> RAII raw mode, alt-screen lifecycle, SIGWINCH</td><td style="color:var(--color-accent-2-700);font-weight:600">Landed</td><td>Session setup/teardown. Never leave the terminal raw, including on the exception path.</td></tr>
 <tr><td>Modal overlay stack, <code>TextBox</code> scrollback, <code>Frame</code>, <code>glyphs.hpp</code> border families</td><td style="color:var(--color-accent-2-700);font-weight:600">Landed</td><td>Instrument panels, evidence log, compartment wireframes.</td></tr>
@@ -120,20 +120,20 @@ em{font-style:italic}
 </tbody>
 </table>
 
-<h3>2.2 What OBSCURA needs that does not exist yet</h3>
-<p>This is the honest critical path. Five of these are the draft's §10 requests; the rest surfaced while reading the library.</p>
+<h3>2.2 What OBSCURA needed beyond the original baseline</h3>
+<p>This is the historical library critical path discovered at rev 2. The table now records how each need was resolved; current work remains downstream in M1.</p>
 <table class="table">
-<thead><tr><th style="width:9%">Ticket</th><th style="width:30%">Need</th><th>Why OBSCURA cannot proceed without it</th></tr></thead>
+<thead><tr><th style="width:9%">Ticket</th><th style="width:30%">Need</th><th>Resolution</th></tr></thead>
 <tbody>
-<tr><td>T-B1</td><td>Named layer API over raw z-index, including the below-background sentinel</td><td>Three of the five bands in §7.1 are unreachable today. No application should hand-write <code>-1073741825</code>.</td></tr>
-<tr><td>T-C1</td><td>Incremental frame edits to a resident image</td><td>The resolve dissolve (§7.4) is the signature moment. Retransmitting a plate 12 times blows the bandwidth budget.</td></tr>
-<tr><td>T-E1</td><td>Kitty keyboard protocol with <code>report-event-types</code></td><td>The commit gesture is hold-to-aim / release-to-confirm. Without genuine key-release events it becomes a timing heuristic, which violates P2.</td></tr>
-<tr><td>T-F1</td><td>Deterministic input record/playback in the event system</td><td>The leaderboard, the replay format and the regression corpus all sit on it.</td></tr>
-<tr><td>T-A1</td><td>Capability floor: declare requirements, refuse to start below them <span style="color:var(--color-neutral-600)">(open as #91)</span></td><td>"Kitty only, no degraded mode" needs a mechanism, not a README sentence.</td></tr>
-<tr><td>T-A2</td><td>Virtual <code>App::setup</code>/<code>teardown</code> hooks <span style="color:var(--color-neutral-600)">(open as #97)</span></td><td>OBSCURA owns an asset pack, an audio device and a replay file. All three need deterministic teardown on the exception path.</td></tr>
-<tr><td>T-A4</td><td>Query the cell rows/cols an <code>Image</code> occupied <span style="color:var(--color-neutral-600)">(open as #100)</span></td><td>Cell-accurate plate placement (§8) cannot guess. Both library examples currently guess, and one guessed wrong.</td></tr>
-<tr><td>T-D1</td><td>Explicit image lifecycle across clear-screen and main↔alt-screen</td><td>Ghost images are a month-long bug hunt if this lands after game logic.</td></tr>
-<tr><td>T-H4</td><td>Bytes-per-frame meter on the driver</td><td>The KB/minute budget (§7.7) is a design constraint from day one, and you cannot hold a budget you cannot measure.</td></tr>
+<tr><td>T-B1</td><td>Named layer API over raw z-index, including the below-background sentinel</td><td>Landed in termforge #114 and consumed by the M0 render bands.</td></tr>
+<tr><td>T-C1</td><td>Incremental frame edits to a resident image</td><td>Landed in termforge #140; downstream playable-session integration is OBSCURA #75.</td></tr>
+<tr><td>T-E1</td><td>Kitty keyboard protocol with <code>report-event-types</code></td><td>Landed with event-typed keys in termforge #60 and is consumed by the commit gesture.</td></tr>
+<tr><td>T-F1</td><td>Deterministic input record/playback in the event system</td><td>Landed in termforge #120; the OBSCURA replay corpus remains M1/M2 application work.</td></tr>
+<tr><td>T-A1</td><td>Capability floor: declare requirements, refuse to start below them</td><td>The termforge floor landed in #91; OBSCURA's application policy remains #27.</td></tr>
+<tr><td>T-A2</td><td>Virtual <code>App::setup</code>/<code>teardown</code> hooks</td><td>Landed in termforge #97 with teardown coverage.</td></tr>
+<tr><td>T-A4</td><td>Query the cell rows/cols an <code>Image</code> occupied</td><td>Landed in termforge #100 as <code>image_cell_extent()</code>.</td></tr>
+<tr><td>T-D1</td><td>Explicit image lifecycle across clear-screen and main↔alt-screen</td><td>Landed in termforge #113 with invalidation and stale-handle coverage.</td></tr>
+<tr><td>T-H4</td><td>Bytes-per-frame meter on the driver</td><td>Landed in termforge #139 and has downstream budget assertions.</td></tr>
 </tbody>
 </table>
 
@@ -153,7 +153,7 @@ em{font-style:italic}
 <h3>2.4 Repository layout</h3>
 <figure>
 <pre style="font-size:10.5px;line-height:1.5;background:var(--color-surface);padding:var(--space-4) var(--space-6);border-radius:var(--radius-md);color:var(--color-neutral-800)">obscura/
-  CMakeLists.txt            C++23, CMake 3.28, FetchContent: termforge v0.1.7, Catch2 v3
+  CMakeLists.txt            C++23, CMake 3.28, FetchContent: pinned termforge, Catch2 v3
   CMakePresets.json         default / clang / asan / ubsan / release
   cmake/toolchain/          clang.cmake, asan.cmake  (mirrors termforge's layout)
   CLAUDE.md AGENTS.md       agent conventions; determinism rules restated as hard rules
@@ -641,12 +641,12 @@ struct Tile {
 <table class="table">
 <thead><tr><th style="width:26%">Component</th><th style="width:22%">Home</th><th>Rationale</th></tr></thead>
 <tbody>
-<tr><td><code>AudioSink</code> interface + <code>NullSink</code></td><td>termforge (ticket T-G1)</td><td>Pure virtual, stdlib-only, zero deps. Satisfies issue-#212's actual intent: interface now, mixer later.</td></tr>
-<tr><td><code>RtAudioSink</code></td><td>Separate optional target, <code>termforge-audio-rtaudio</code></td><td>Its own CMake project, <code>FetchContent</code>-ed by consumers who want it. termforge's policy holds; OBSCURA gets a real mixer.</td></tr>
-<tr><td>Process-boundary sink (<code>paplay</code>/<code>pw-play</code>)</td><td>termforge examples (T-G3)</td><td>Kept as the zero-dependency reference implementation and as the fallback when no audio target is built.</td></tr>
+<tr><td><code>AudioSink</code> interface + <code>NullSink</code></td><td>OBSCURA <code>src/audio/</code> (T-G1)</td><td>Application-owned, pure virtual, stdlib-only and zero-dependency. The optional mixer remains separate.</td></tr>
+<tr><td><code>RtAudioSink</code></td><td>Separate optional OBSCURA target (T-G2, unfiled)</td><td>M2 work only after a concrete call site exists. TermForge's stdlib-only policy remains untouched.</td></tr>
+<tr><td>Process-boundary sink (<code>paplay</code>/<code>pw-play</code>)</td><td>Optional adapter (T-G3, unfiled)</td><td>A possible zero-dependency reference, not a commitment before M2.</td></tr>
 </tbody>
 </table>
-<p>If the separate-target overhead is unwelcome, the acceptable alternative is for <code>RtAudioSink</code> to live in OBSCURA's <code>src/audio/</code>. What is <em>not</em> acceptable is a third-party dependency inside termforge's shipped library.</p>
+<p>OBSCURA already owns the sink interface and null implementation. The eventual backend may live in a separate optional target or under OBSCURA's audio layer; that M2 choice must not add a third-party dependency to termforge's shipped library.</p>
 
 <h3>10.3 RtAudio design</h3>
 <figure>
@@ -718,22 +718,22 @@ struct Tile {
 <p><strong>Fairness rule.</strong> Daily-seed mode uses a fixed, published loadout so the leaderboard compares reasoning rather than unlock progress. Unlocks apply to free-play only. Case 001's published loadout is <em>spectral lamp + decrypter + ossuary tag</em> (mass 4, power 3), which leaves <code>damage_pattern</code> evidence visible but unreadable — the teaching beat that instruments gate content.</p>
 
 <h2>12 · termforge work plan</h2>
-<p>Grouped as epics; each ticket is small enough to land in one sitting with a test. Four already exist upstream and are marked as such.</p>
+<p>Grouped as epics; each ticket is small enough to land in one sitting with a test. Live status and issue mappings are maintained in the public GitHub tracker and <code>05-termforge-tickets.md</code>.</p>
 <div style="background:var(--color-surface);border-radius:calc(var(--radius-lg) * 1.15);padding:var(--space-4) var(--space-6);margin:var(--space-3) 0 var(--space-4);break-inside:avoid">
 <h4 style="margin-top:0">The implementer files these</h4>
-<p style="margin-bottom:0">The Claude Code session is authorised to open feature-request tickets against termforge directly. It should file the T-series itself rather than waiting on a human, following the protocol in §12.1 — <strong>search before filing</strong>, one ticket per unit of work, acceptance criteria that a test can satisfy. Filing a ticket is not the same as landing it: library work still lands in termforge, on its own branch, under termforge's conventions and both-compiler verification.</p>
+<p style="margin-bottom:0">The agent is authorised to open feature-request tickets against termforge directly. It should file the T-series itself rather than waiting on a human, following the protocol in §12.1 — <strong>search before filing</strong>, one ticket per unit of work, acceptance criteria that a test can satisfy. Filing a ticket is not the same as landing it: library implementation belongs in a dedicated termforge session, on its own branch, under termforge's conventions and both-compiler verification.</p>
 </div>
 
 <h3>12.1 Ticket-filing protocol</h3>
 <ol>
-<li><strong>Deduplicate first.</strong> Search open issues for the facility, not the ticket name. #91 (capability floor), #97 (setup/teardown hooks), #100 (image cell rows) and #102 (<code>fill_rect</code> intersect) already exist — comment on those with the OBSCURA use case instead of opening near-duplicates. Issue numbers currently run to #102; the frequently cited "#212" does not exist, so T-G1 is a new filing.</li>
+<li><strong>Deduplicate first.</strong> Search current GitHub issues for the facility, not the ticket name. The T-series mapping in the live handoff identifies older requests that landed under different titles; do not infer state from the historical issue numbers in this specification.</li>
 <li><strong>One ticket, one landable change.</strong> If a ticket cannot be described by a single acceptance sentence with a test behind it, split it.</li>
 <li><strong>Body shape</strong> — four short sections, no more: <em>Motivation</em> (what an application cannot do today, with the concrete call site), <em>Proposed API</em> (signatures, not prose), <em>Acceptance</em> (the assertion a test will make), <em>Notes</em> (protocol references, affected drivers, whether it is an API break).</li>
 <li><strong>Respect the library's rules in the proposal itself.</strong> No third-party dependency in the shipped library; degradation is an event, never a silent downgrade; drivers emit bytes verbatim and sanitisation stays in the renderer; capability requirements are pinned, never emulator versions. A ticket that violates one of these will be closed, correctly.</li>
-<li><strong>Host-neutral bodies.</strong> Same text works for <code>gh issue create</code> and <code>tea issue create</code>. Mirror every body into <code>docs/tickets/T-XX.md</code> in the OBSCURA repo so the plan survives a host migration and issue IDs are never the source of truth (DR-10).</li>
+<li><strong>GitHub is the work record.</strong> The public issue is the canonical request body, discussion and state. Keep the stable T-series identifier in the design so intent does not depend on an issue number; do not maintain a second body copy (DR-10).</li>
 <li><strong>Label</strong> <code>enhancement</code> for new facilities, and reference the milestone it blocks (M0–M4) in the body, not in the title.</li>
 <li><strong>Attribution.</strong> Agent-authored commits carry the model trailer termforge's conventions require. The same honesty applies to tickets: say that the request comes from the OBSCURA flagship work.</li>
-<li><strong>Do not file speculative tickets.</strong> If OBSCURA can be built without it, it is not a ticket yet. T-C3 and T-D4 are explicitly marked optional for this reason.</li>
+<li><strong>Do not file speculative tickets.</strong> If OBSCURA can be built without it, it is not a ticket yet. Optional facilities are filed only when an active milestone supplies a concrete call site.</li>
 </ol>
 <table class="table">
 <thead><tr><th style="width:8%">Ticket</th><th style="width:30%">Title</th><th style="width:12%">Blocks</th><th>Acceptance</th></tr></thead>
@@ -754,7 +754,7 @@ struct Tile {
 <tr><td colspan="4" style="background:var(--color-accent-100);font-family:var(--font-body);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.09em;padding:6px 0 5px">Epic D — image lifecycle, atlas and transport</td></tr>
 <tr><td>T-D1</td><td>Explicit image lifecycle across clear-screen and main↔alt-screen transitions</td><td>M0</td><td>Lifecycle tests exist <em>before</em> game logic: clear mid-dissolve, alt-screen round trip, SIGWINCH mid-dissolve, eviction mid-dissolve.</td></tr>
 <tr><td>T-D2</td><td>Quota accounting and eviction policy hooks</td><td>M1</td><td>Quota exhaustion is an event, not a corrupt screen. Policy is injectable.</td></tr>
-<tr><td>T-D3</td><td>Asset pack / image atlas manager: residency, ID allocation, eviction <span style="color:var(--color-neutral-600)">· partly landed</span></td><td>M1</td><td>Per-region stable IDs and LRU already exist; this generalises them to a named pack with an explicit residency API.</td></tr>
+<tr><td>T-D3</td><td>Asset pack / image atlas manager: residency, ID allocation, eviction <span style="color:var(--color-neutral-600)">· downstream-owned for M1</span></td><td>M1</td><td>TermForge supplies residency primitives; OBSCURA's <code>EvidenceImageCache</code> owns the concrete M1 cache and eviction policy. Generalisation waits for another proven consumer.</td></tr>
 <tr><td>T-D5</td><td>Author-declared metadata on atlas entries, carried through the manifest hash</td><td>M3</td><td>Stable integer IDs plus opaque per-entry metadata (OBSCURA stores socket signatures and weights). The library never interprets it; it guarantees the IDs and the hash coverage.</td></tr>
 <tr><td>T-D4</td><td>Shared-memory transfer path for large plates</td><td>M3</td><td>Opt-in; falls back to base64 with an event. Nice-to-have, not on the critical path.</td></tr>
 <tr><td colspan="4" style="background:var(--color-accent-100);font-family:var(--font-body);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.09em;padding:6px 0 5px">Epic E — Kitty keyboard protocol</td></tr>
@@ -766,26 +766,26 @@ struct Tile {
 <tr><td>T-F2</td><td>Injectable clock for headless playback</td><td>M2</td><td>No wall-clock reads in the event loop when a clock is supplied.</td></tr>
 <tr><td>T-F3</td><td>Golden-corpus harness in the test support library</td><td>M2</td><td>Any app can point the harness at a corpus directory and get one CTest case per file.</td></tr>
 <tr><td colspan="4" style="background:var(--color-accent-100);font-family:var(--font-body);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.09em;padding:6px 0 5px">Epic G — audio sink</td></tr>
-<tr><td>T-G1</td><td><code>AudioSink</code> interface + <code>NullSink</code>, stdlib-only <span style="color:var(--color-neutral-600)">· the real content of "#212"</span></td><td>M1</td><td>Header + null implementation, no third-party dependency, no policy break.</td></tr>
+<tr><td>T-G1</td><td><code>AudioSink</code> interface + <code>NullSink</code>, stdlib-only <span style="color:var(--color-neutral-600)">· downstream-owned</span></td><td>M1</td><td>Implemented in OBSCURA: header + null implementation, no third-party dependency and no TermForge policy change.</td></tr>
 <tr><td>T-G2</td><td><code>RtAudioSink</code> as a separate optional target</td><td>M2</td><td>Own CMake project; consumers <code>FetchContent</code> it. termforge's stdlib-only guarantee is untouched.</td></tr>
 <tr><td>T-G3</td><td>Process-boundary sink as the zero-dependency reference</td><td>M2</td><td>Shells to <code>pw-play</code>/<code>paplay</code>; documented as the fallback, not the plan.</td></tr>
 <tr><td colspan="4" style="background:var(--color-accent-100);font-family:var(--font-body);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.09em;padding:6px 0 5px">Epic H — findings from this design pass</td></tr>
 <tr><td>T-H4</td><td>Bytes-per-frame meter on the driver, readable by the app</td><td>M0</td><td>The KB/minute budget becomes a test rather than a hope. Cheap; do it first.</td></tr>
-<tr><td>T-H5</td><td>Expose cell pixel geometry (and its change on resize/font change)</td><td>M0</td><td>Plate sizing needs it. Verify whether the existing pixel-region plumbing already answers this before writing code.</td></tr>
+<tr><td>T-H5</td><td>Expose cell pixel geometry (and its change on resize/font change)</td><td>M0</td><td>Landed in TermForge v0.57.25 via #143. OBSCURA's current Stretch placement does not require a pin bump; future native re-rasterisation can consume it.</td></tr>
 <tr><td>T-H6</td><td>Sanitisation boundary review for leaderboard-supplied names</td><td>M4</td><td>Escape stripping stays in the renderer, never the driver. Add a test with a hostile player name.</td></tr>
 <tr><td>T-H1</td><td><code>fill_rect</code> should use <code>Rect::intersect</code> <span style="color:var(--color-accent-2-700)">· exists as #102</span></td><td>M0</td><td>Dirty-rect clipping correctness; OBSCURA's dissolve leans on it.</td></tr>
 </tbody>
 </table>
 
 <h2 style="break-before:page">13 · Milestones and gates</h2>
-<p>Each milestone is a gate. Do not begin the next until the current one is honestly passed. The M-series is the game; the T-series above is the library. The critical correction to draft v1 is that <strong>M0 is mostly library work</strong> — do it in termforge's own examples, not in a game repository that does not exist yet.</p>
+<p>Each milestone is a gate. Do not begin the next until the current one is honestly passed. The M-series is the game; the T-series above is the library. <strong>M0 completed in termforge; M1 is the current downstream milestone.</strong></p>
 
 <h3>13.1 Dependency matrix</h3>
 <table class="table">
 <thead><tr><th style="width:14%">Milestone</th><th style="width:36%">Required tickets</th><th>Cannot start without</th></tr></thead>
 <tbody>
-<tr><td>M0</td><td>T-A1, T-A2, T-A4, T-B1, T-B2, T-C1, T-C2, T-C4, T-D1, T-H1, T-H4, T-H5</td><td>Nothing. Start here, in termforge.</td></tr>
-<tr><td>M1</td><td>T-A3, T-D2, T-D3, T-E1, T-E2, T-E3, T-G1</td><td>M0 gate passed — the dissolve must feel good first.</td></tr>
+<tr><td>M0</td><td>T-A1, T-A2, T-A4, T-B1, T-B2, T-C1, T-C2, T-C4, T-D1, T-H1, T-H4, T-H5</td><td>Completed. The upstream facilities and render-spike evidence landed.</td></tr>
+<tr><td>M1</td><td>T-A3, T-D2, T-D3, T-E1, T-E2, T-E3, T-G1</td><td>In progress. Remaining work is tracked as OBSCURA application issues.</td></tr>
 <tr><td>M2</td><td>T-F1, T-F2, T-F3, T-G2, T-G3</td><td>M1 gate passed — it must be fun before there is more of it.</td></tr>
 <tr><td>M3</td><td>T-D5, T-D4 (optional)</td><td>M2 gate passed. Nothing here is on the critical path to shipping.</td></tr>
 <tr><td>M4</td><td>T-H6</td><td>M3, or M3 abandoned — see below.</td></tr>
@@ -824,7 +824,7 @@ struct Tile {
 <table class="table">
 <thead><tr><th style="width:32%">Risk</th><th style="width:12%">Severity</th><th>Mitigation</th></tr></thead>
 <tbody>
-<tr><td><strong>termforge feature work is the critical path.</strong> Layers, animation edits and the keyboard protocol are all unlanded; M0 is library work wearing a game's clothes.</td><td style="color:var(--color-accent-700);font-weight:600">High</td><td>Named as such (§13.1). Build M0 inside termforge's examples where the tests already live. Do not start a game repository until the M0 gate passes.</td></tr>
+<tr><td><strong>Playable integration can drift from proven library primitives.</strong> The M0 layer, edit and keyboard facilities have landed, but application wiring still decides whether their contracts survive a real run.</td><td style="color:var(--color-accent-700);font-weight:600">High</td><td>Track the remaining M1 work downstream, preserve deterministic step-indexed transitions, and keep the bandwidth and terminal gates executable.</td></tr>
 <tr><td>Generator cannot guarantee solvable-and-interesting puzzles</td><td style="color:var(--color-accent-700);font-weight:600">High</td><td>M3 is last. Authored cases ship without it. Precedent: the genre's best-known example was fully hand-authored for exactly this reason.</td></tr>
 <tr><td>Bandwidth over ssh</td><td>Medium</td><td>Hard KB/minute budget from M0, with a meter (T-H4) and CI assertions. Resolve granularity tuned against it.</td></tr>
 <tr><td>Image lifecycle bugs (ghost images)</td><td>Medium</td><td>Lifecycle tests in M0, before game logic exists.</td></tr>
@@ -861,9 +861,9 @@ struct Tile {
 <tr><td>05</td><td>Is 12–24 compartments right?</td><td>More compartments means more survey cost and a longer session; fewer means the deduction space collapses. The screen also constrains it: the deck plan holds 15 boxes.</td><td>12 for case 1. Tune against the 30–45 min target in M1; the renderer caps it at 15 until the embedder gets smarter.</td></tr>
 <tr><td>06</td><td>Should <code>MISLEADING</code> evidence exist in case 1?</td><td>Introducing lies immediately teaches distrust before the player trusts anything. Withholding them makes case 2 a step change.</td><td>None in case 1; two <code>STALE</code> items instead. Introduce <code>MISLEADING</code> in case 2. Decided for case 1.</td></tr>
 <tr><td>07</td><td>Is audio tier 1 or tier 2?</td><td>Atmosphere is a large part of dread. But information in audio breaks ssh play, accessibility and the determinism story.</td><td><strong>Decided:</strong> interface tier 1 (M1), RtAudio tier 2 (M2), no audio-only information ever. §10.1.</td></tr>
-<tr><td>08</td><td>Where does RtAudio live?</td><td>In termforge it is convenient and breaks the stdlib-only guarantee. Outside it costs one more CMake project.</td><td><strong>Decided:</strong> separate optional target; interface only in termforge. §10.2.</td></tr>
+<tr><td>08</td><td>Where does RtAudio live?</td><td>In termforge it is convenient and breaks the stdlib-only guarantee. Outside it costs one more CMake project.</td><td><strong>Decided:</strong> OBSCURA owns the sink interface and null implementation; a real backend remains a separate optional M2 target. TermForge stays stdlib-only. §10.2.</td></tr>
 <tr><td>09</td><td>Does the replay record ticks or only input order?</td><td>Recording ticks reproduces animation exactly but makes wall-clock jitter part of the artifact. Input-order-only makes verification trivially machine-independent.</td><td><strong>Decided:</strong> input order only; the tick is cosmetic. §3.4.</td></tr>
-<tr><td>10</td><td>Public GitHub now, or private Gitea first?</td><td>Public early gets the blog-post audience and free scrutiny of the determinism claims. Private early lets M0 fail quietly, which matters when M0's gate is "does this feel good".</td><td>Private Gitea through the M0 gate; mirror public at M1. Keep ticket bodies platform-neutral and mirrored in <code>docs/tickets/</code> so IDs are not the source of truth.</td></tr>
+<tr><td>10</td><td>Public GitHub now, or private Gitea first?</td><td>Public early gets the blog-post audience and free scrutiny of the determinism claims. Private early lets M0 fail quietly, which matters when M0's gate is "does this feel good".</td><td><strong>Completed:</strong> private through M0, public from M1. GitHub issues are the canonical work record; stable T-series identifiers preserve design intent without duplicated ticket bodies.</td></tr>
 <tr><td>11</td><td>Epics with tickets, or tickets alone?</td><td>Epics survive re-planning; flat tickets are easier to pick up cold.</td><td>Epics A–H as above, tickets inside them. Refine ticket bodies in the first working session with the implementer.</td></tr>
 <tr><td>12</td><td>What is the minimum terminal, and what happens below it?</td><td>A smaller floor widens the audience and complicates every layout. A fixed reference grid makes the deck plan authorable.</td><td><strong>Decided:</strong> 120 × 40 floor, fixed reference grid, letterbox above, refuse below, pause-to-modal on shrink. §2.3.</td></tr>
 <tr><td>13</td><td>Are authored cases data files or C++ data?</td><td>A data format needs a parser, a schema, error handling and its own determinism story. C++ data is compile-time checked and has none of that, but no external author can write a case.</td><td><strong>Decided for now:</strong> C++ <code>constexpr</code> data under <code>cases/</code>. Revisit only when someone other than you authors a case.</td></tr>
@@ -1004,11 +1004,10 @@ struct Tile {
 
 <h2>Appendix C · Immediate next actions</h2>
 <ol>
-<li><strong>Have the implementer file epics A–H</strong> (§12) under the §12.1 protocol, and mirror the bodies into <code>docs/tickets/</code> so the plan does not depend on issue IDs. Four already exist upstream (#91, #97, #100, #102) and want an OBSCURA-use-case comment rather than a duplicate; there is no #212, so the audio interface is a fresh filing as T-G1.</li>
-<li><strong>Build M0 inside termforge's examples</strong>: five-band composite, one plate, one dissolve via incremental frame edits, lifecycle tests, bytes-per-frame meter. Do not create the OBSCURA repository yet.</li>
-<li><strong>Answer the M0 gate honestly.</strong> If the dissolve does not feel good, the concept is wrong and you have spent a week finding out.</li>
-<li><strong>Then</strong> create the OBSCURA repository per §2.4 and implement Appendix A as case 001 — the truth object, evidence set and redaction are already authored, so M1 is engineering, not design.</li>
-<li><strong>Instrument the render path for bandwidth from the first commit</strong>, and put §7.7's limits in CI before there is anything to regress.</li>
+<li><strong>Use the public GitHub issues as the work queue</strong>, retaining the stable T-series and M-series names in this design rather than copying issue bodies into a second tree.</li>
+<li><strong>Continue M1 in dependency order</strong>: refuse-to-start, the playable resolve dissolve, AIM, economy and batch resolution, debrief, then the first replay corpus entry.</li>
+<li><strong>Keep the M1 gate honest.</strong> The case must be completable and losable, and three external players must finish unaided before generator work begins.</li>
+<li><strong>Keep render bandwidth asserted</strong> as the playable session replaces the completed M0 spike with downstream integration.</li>
 </ol>
 
 <div style="margin-top:var(--space-8);padding-top:var(--space-3);border-top:4px solid var(--color-accent-300);font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);display:flex;justify-content:space-between">
