@@ -169,5 +169,5 @@ to continue: a silent downgrade would let a player commit by accident.
 > **Correction (2026-07-31).** The Kitty keyboard protocol this spec depends on
 > **has landed** in termforge v0.6.3 (issue #60): `KeyAction{Press,Repeat,Release}`,
 > `KeyEvent::action`, `KeyboardMode{Legacy,Disambiguate,Enhanced}`, and
-> `Capabilities::kitty_keyboard`. Only mid-session *loss* detection (T-E3) is
-> still missing.
+> `Capabilities::kitty_keyboard`. Mid-session loss detection (T-E3) landed in
+> v0.57.24 (issue #351), including deterministic held-key retirement.

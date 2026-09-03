@@ -2,44 +2,54 @@
 // belongs in this file.
 
 #include <obscura/input/commit_gesture.hpp>
-
-#include <cstddef>
+#include <obscura/input/key_map.hpp>
 
 namespace obscura::input {
 
-auto CommitGesture::arm() -> bool {
-  if (m_state != GestureState::Idle) {
-    return false;
+auto CommitGesture::dispatch(Intent intent, bool release_available)
+    -> GestureEffect {
+  if (m_state == GestureState::Blocked) {
+    return GestureEffect::None;
   }
-  m_state = GestureState::Armed;
-  return true;
+  if (!release_available) {
+    return protocol_lost();
+  }
+
+  switch (intent) {
+    case Intent::ArmCommit:
+      if (m_state != GestureState::Idle) {
+        return GestureEffect::None;
+      }
+      m_state = GestureState::Aiming;
+      return GestureEffect::AimOpened;
+
+    case Intent::ReleaseCommit:
+      if (m_state == GestureState::Aiming) {
+        m_state = GestureState::Idle;
+        return GestureEffect::Committed;
+      }
+      // An orphan release must be observable as an abort even though the
+      // stable state is already Idle. It can never commit a default target.
+      m_state = GestureState::Idle;
+      return GestureEffect::Aborted;
+
+    case Intent::Cancel:
+      if (m_state != GestureState::Aiming) {
+        return GestureEffect::None;
+      }
+      m_state = GestureState::Idle;
+      return GestureEffect::Aborted;
+
+    default: return GestureEffect::None;
+  }
 }
 
-auto CommitGesture::choose(std::size_t target) -> bool {
-  // Re-choosing while already Targeted is allowed: the player is scrolling
-  // through suspects with the gesture up, which is the whole point of a
-  // separate target step.
-  if (m_state != GestureState::Armed && m_state != GestureState::Targeted) {
-    return false;
+auto CommitGesture::protocol_lost() -> GestureEffect {
+  if (m_state == GestureState::Blocked) {
+    return GestureEffect::None;
   }
-  m_target = target;
-  m_state = GestureState::Targeted;
-  return true;
-}
-
-auto CommitGesture::confirm() -> bool {
-  // Only from Targeted. Confirming out of Armed would let a double-tap of the
-  // arm key fire an accusation at whatever the default target happened to be.
-  if (m_state != GestureState::Targeted) {
-    return false;
-  }
-  m_state = GestureState::Fired;
-  return true;
-}
-
-auto CommitGesture::cancel() -> void {
-  m_state = GestureState::Idle;
-  m_target = 0;
+  m_state = GestureState::Blocked;
+  return GestureEffect::Blocked;
 }
 
 } // namespace obscura::input

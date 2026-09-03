@@ -17,7 +17,8 @@ T-G1 (`AudioSink` interface + `NullSink`, stdlib-only).
 > `KeyAction{Press,Repeat,Release}`, `KeyEvent::action`, `KeyboardMode`,
 > `Capabilities::kitty_keyboard`, push-on-setup / pop-on-teardown including the
 > crash path — all present in v0.6.3 and tested in `test/04input` and
-> `test/31keyboard`. Only T-E3 (mid-session protocol *loss*) remains.
+> `test/31keyboard`. T-E3 subsequently landed in v0.57.24: live loss is now an
+> observable, replayable transition rather than a silent press-only downgrade.
 
 ## Tasks
 ### Repo and gates

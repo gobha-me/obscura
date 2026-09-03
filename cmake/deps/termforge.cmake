@@ -40,7 +40,7 @@
 # header derives from termforge::App, so an installed obscura archive and the
 # TermForge headers its consumer sees must agree on this pre-1.0 ABI line.
 if (NOT TERMFORGE_REQUIRED_VERSION)
-    set(TERMFORGE_REQUIRED_VERSION 0.57.20)
+    set(TERMFORGE_REQUIRED_VERSION 0.57.24)
 endif()
 
 find_package(termforge ${TERMFORGE_REQUIRED_VERSION} QUIET)

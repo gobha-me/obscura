@@ -160,7 +160,7 @@ See `01-M0-render-spike.md` for the corrected plate budget.
 
 # Corrections (2026-08-31)
 
-The fetched pin and installed-package floor are now **termforge v0.57.20**. This
+The fetched pin and installed-package floor are now **termforge v0.57.24**. This
 is not a speculative refresh: it activates the M0 facilities that landed after
 v0.7.1 — named image layers, persistent image ownership/damage, resident block
 edits, exact animation-frame gaps and explicit image invalidation.
@@ -169,7 +169,7 @@ The package floor is as important as the fetched tag. `obscura::core::App`
 publicly derives from `termforge::App`; allowing an installed consumer to pair
 the archive built against v0.57 with pre-1.0 headers from another minor line
 would make its view of that base class untrustworthy. Both build-time
-`find_package` and exported `find_dependency` therefore ask for v0.57.20.
+`find_package` and exported `find_dependency` therefore ask for v0.57.24.
 
 Two wire oracles moved, both deliberately. Cursor-aware sequential output makes
 an 80x24 first paint nearly fit the 2 KiB idle ceiling, while an unchanged idle
