@@ -41,6 +41,9 @@ jobs:
           sudo /tmp/llvm.sh "$CLANG_VERSION"
           sudo apt-get install -y "clang-format-$CLANG_VERSION"
 
+      - name: Self-test source discovery
+        run: tools/format.sh --selftest
+
       - name: Check first-party C++ formatting
         run: tools/format.sh --check
 
