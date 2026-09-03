@@ -1,7 +1,7 @@
 # M1 — The fun test
 
-**Where:** a new `obscura/` repository (layout in the spec §2.4). Start it only
-after the M0 gate passes.
+**Where:** this `obscura/` repository (layout in the spec §2.4). M0 passed before
+the M1 implementation work listed below began.
 **Scope:** one hand-authored case, no generator, no meta progression, no
 leaderboard, fixed loadout. Playable start to finish in 30–45 minutes.
 **Gate:** *Is it fun?* Hand it to three people who did not build it.
@@ -19,53 +19,75 @@ T-G1 (`AudioSink` interface + `NullSink`, stdlib-only).
 > crash path — all present in v0.6.3 and tested in `test/04input` and
 > `test/31keyboard`. T-E3 subsequently landed in v0.57.24: live loss is now an
 > observable, replayable transition rather than a silent press-only downgrade.
+>
+> **Status (2026-09-03).** T-D2 is available in the current TermForge pin.
+> T-D3's immediate M1 need is owned downstream by `EvidenceImageCache`
+> ([PR #69](https://github.com/gobha-me/obscura/pull/69)); no speculative
+> general-purpose atlas ticket is needed. T-G1 is likewise application-owned as
+> `audio::Sink` and `audio::NullSink`, present since the repository bootstrap.
 
 ## Tasks
 ### Repo and gates
-- [ ] Repo per spec §2.4. `CLAUDE.md` from this bundle at the root.
-- [ ] CMake: C++23, FetchContent termforge + Catch2 v3, presets for
-      default / clang / asan / tsan / ubsan / release.
-- [ ] `tools/lint/sim_purity.sh` wired as a CTest case **before** `src/world/`
+- [x] Repo per spec §2.4. `CLAUDE.md` from this bundle at the root
+      ([v0.1.1](https://github.com/gobha-me/obscura/releases/tag/v0.1.1)).
+- [x] CMake: C++23, FetchContent termforge + Catch2 v3, presets for
+      default / clang / asan / tsan / ubsan / release
+      ([PR #63](https://github.com/gobha-me/obscura/pull/63)).
+- [x] `tools/lint/sim_purity.sh` wired as a CTest case **before** `src/world/`
       has content. It is cheap to satisfy from day one and expensive to retrofit.
+      The completed default-deny source/header firewall is proven by
+      [PR #54](https://github.com/gobha-me/obscura/pull/54) and
+      [PR #55](https://github.com/gobha-me/obscura/pull/55).
 - [ ] Refuse-to-start contract (spec §2.3): Kitty graphics with below-background
       images, keyboard protocol with event types, >= 120x40 grid, known cell
       geometry >= 6x12 px. Exit 78 in cooked mode with the probe response.
       Never enter alt-screen before the floor is verified.
 
 ### World
-- [ ] Types from spec §5 verbatim: `Compartment`, `Fact`, `Evidence`, `Actor`,
-      `ActorStep`, `Commit`, `Truth`, and the enums.
-- [ ] Case 001 *Cold Lantern* as `cases/case001_cold_lantern.cpp`, C++ constexpr
+- [x] Types from spec §5 verbatim: `Compartment`, `Fact`, `Evidence`, `Actor`,
+      `ActorStep`, `Commit`, `Truth`, and the enums
+      ([PR #64](https://github.com/gobha-me/obscura/pull/64)).
+- [x] Case 001 *Cold Lantern* as `cases/case001_cold_lantern.cpp`, C++ constexpr
       data (DR-13): 12 compartments, 15 edges, 7 actors, 9 timesteps, 16 served
       evidence items. Data is in `06-case-001-cold-lantern.md` — transcribe it,
-      do not re-invent it.
-- [ ] Commit verification: scan the asserted actor's timeline for a step matching
-      (where, what) at any time. Time is not part of a commit in M1 (DR-14).
-- [ ] Redaction invariant test: every commit in the solution key has at least one
-      served chain under the published loadout.
+      do not re-invent it
+      ([PR #65](https://github.com/gobha-me/obscura/pull/65)).
+- [x] Commit verification: scan the asserted actor's timeline for a step matching
+      (where, what) at any time. Time is not part of a commit in M1 (DR-14)
+      ([PR #65](https://github.com/gobha-me/obscura/pull/65)).
+- [x] Redaction invariant test: every commit in the solution key has at least one
+      served chain under the published loadout
+      ([PR #65](https://github.com/gobha-me/obscura/pull/65)).
 
 ### Render
-- [ ] Glyph substrate: seeded from `STREAM_GLYPH`; three character classes —
+- [x] Glyph substrate: seeded from `STREAM_GLYPH`; three character classes —
       shade blocks for mass, box-drawing debris for unresolved structure,
       half-legible archetype manifest fragments. Corruption ratio scales with
-      distance from the cursor, so the next compartment is *almost* known.
-- [ ] SHIP mode at the region table in `09-screens.md`: three bands of 22x9
+      distance from the cursor, so the next compartment is *almost* known
+      ([PR #66](https://github.com/gobha-me/obscura/pull/66)).
+- [x] SHIP mode at the region table in `09-screens.md`: three bands of 22x9
       compartment boxes at columns 0/24/48/72/96, trunk gutters, soot line,
       ledger strip, console bezel. Fixed reference grid; letterbox on larger
-      terminals; never reflow.
-- [ ] Survey firm-up (UNKNOWN → SURVEYED): wireframe plus damage tint in the cell
-      backgrounds, evidence markers.
-- [ ] Resolve dissolve, ported from the M0 spike.
-- [ ] **Evidence log with real inline images** (Unicode placeholders, already
+      terminals; never reflow
+      ([PR #67](https://github.com/gobha-me/obscura/pull/67)).
+- [x] Survey firm-up (UNKNOWN → SURVEYED): wireframe plus damage tint in the cell
+      backgrounds, evidence markers
+      ([PR #68](https://github.com/gobha-me/obscura/pull/68)).
+- [ ] Resolve dissolve, ported from the M0 spike
+      ([issue #75](https://github.com/gobha-me/obscura/issues/75)).
+- [x] **Evidence log with real inline images** (Unicode placeholders, already
       supported by termforge). Build this in M1, not M2 — it is the screenshot
-      that sells the project.
+      that sells the project
+      ([PR #69](https://github.com/gobha-me/obscura/pull/69)).
 
 ### Input
-- [ ] Key map per spec §9.
-- [ ] Commit gesture: `Space` **press** opens AIM, **release** commits, `Esc`
+- [x] Key map per spec §9
+      ([PR #70](https://github.com/gobha-me/obscura/pull/70)).
+- [x] Commit gesture: `Space` **press** opens AIM, **release** commits, `Esc`
       aborts free even while held. A release with no matching press aborts —
       fail toward the state that costs the player nothing. Protocol loss
-      mid-session pauses to a modal and refuses to continue.
+      mid-session pauses to a modal and refuses to continue
+      ([PR #71](https://github.com/gobha-me/obscura/pull/71)).
 - [ ] AIM overlay, 72x20 at (24,10). Supporting/contradicting panel computed by
       fact intersection over the player's own log. **Test that it cannot reach
       `Truth` or `Veracity`.**

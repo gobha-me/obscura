@@ -76,7 +76,8 @@ fixture — bug reports arrive as playable artifacts.
 > and column — 8.5 on average at this grid size, and more as the grid grows.
 > The dominant term is addressing, not content. Reaching 2 KB needs per-layer
 > damage tracking (T-B2,
-> [termforge#142](https://github.com/gobha-me/termforge/issues/142), still open)
+> [termforge#142](https://github.com/gobha-me/termforge/issues/142), which later
+> closed as obsolete after persistent pixels gained independent damage state)
 > and/or run coalescing upstream.
 >
 > What `test/10frame-bytes` asserts instead, all of it true today: the frame cost
@@ -84,15 +85,15 @@ fixture — bug reports arrive as playable artifacts.
 > `cells` while no plates are drawn, and **a repeated identical frame costs
 > exactly zero**. That last one is the property the whole idle budget rests on.
 >
-> **That test owns the number, and this row does not.** Re-baseline when #142
-> lands by changing it there and letting this row keep pointing at it — a figure
+> **That test owns the number, and this row does not.** The v0.57.24 correction
+> below records #142's later closure and the resulting re-baseline; a figure
 > copied into four documents is a figure that will disagree with itself.
 >
 > One trap for whoever checks this: termforge's own status notes quote ~5.1 KB
 > for a 120x40 repaint, which looks like it contradicts 16,344 at 80x24. It does
 > not — that measurement is a diffed steady-state frame, not a first paint.
 >
-> **Correction (2026-08-31).** OBSCURA now requires termforge v0.57.20. The
+> **Correction (2026-08-31).** OBSCURA now requires termforge v0.57.24. The
 > earlier block remains the record of v0.7.1, but its stop rule is retired:
 > persistent image content now has damage state independent from the cell grid,
 > and the fallback driver keeps cursor position across adjacent cell writes.

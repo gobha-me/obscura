@@ -14,8 +14,9 @@ file is the bug.
 > faster than this file: check a tag before you trust a version number in it.
 >
 > **Correction (2026-08-31).** The pin and installed-package floor are now
-> **v0.57.20**. The M0 image primitives have landed; the live table below is the
-> authority for which downstream trackers that retires.
+> **v0.57.24**. The M0 image primitives and live keyboard-loss transition have
+> landed; the live table below is the authority for downstream status. TermForge
+> v0.57.25 is available, but OBSCURA does not yet require its cell-geometry API.
 
 ## Baseline
 - **C++23**, **CMake >= 3.28**, GCC 13+ / **Clang 19+**. Both compilers, always.
@@ -23,11 +24,11 @@ file is the bug.
   cannot build against its libstdc++ pairing. CI installs a newer Clang for
   exactly this reason — do not "fix" that step by lowering the floor.
 - **Catch2 v3** for tests. **No package manager** — `FetchContent` only.
-- termforge consumed as `termforge::lib` at a pinned tag (**v0.57.20**), linked
+- termforge consumed as `termforge::lib` at a pinned tag (**v0.57.24**), linked
   **`PUBLIC`** — `include/obscura/core/app.hpp` derives from `termforge::App`,
   so the usage requirement has to travel with the target.
   Never vendored, never patched locally. Missing library features are filed
-  upstream as tickets and landed there first.
+  upstream as tickets and landed there first, in a dedicated TermForge session.
 - Build options are `obscura_{BUILD_LIB,BUILD_BIN,TESTS,INSTALL}`. All but
   `BUILD_LIB` default to `PROJECT_IS_TOP_LEVEL`; the library defaults ON.
   `OBSCURA_AUDIO` arrives with the audio work in M1/M2 (ON in release, OFF in CI).
@@ -102,7 +103,10 @@ and under ASan/UBSan. A divergence is undefined behaviour — chase it immediate
 Terminal-protocol behaviour also needs empirical verification on a real emulator.
 You cannot see a terminal; ask the human to run the probe and report the bytes.
 
-## Upstream status (verified 2026-08-31 against termforge v0.57.20)
+## Upstream status (verified 2026-09-03)
+
+Unless noted otherwise, landed facilities below are present in OBSCURA's
+v0.57.24 pin. TermForge v0.57.25 is the current upstream release.
 
 You may open feature requests against termforge, and comment on open issues.
 **Search for the *facility*, not the ticket name** — several T-series items
@@ -112,7 +116,7 @@ already existed under different titles.
 |---|---|---|---|
 | T-A1 | capability floor / refuse to start | #91 | ✅ **landed** |
 | T-A2 | virtual setup/teardown hooks | #97 | ✅ **landed** — `on_start` / `on_stop` |
-| T-A3 | min grid size + pause-to-modal | #91 | ✅ **landed** — live `AppRequirements` reevaluation |
+| T-A3 | min grid size + pause-to-modal | #91 | floor landed; OBSCURA #27 remains open |
 | T-A4 | image cell rows/cols occupied | #100 | ✅ **landed** — `image_cell_extent()` |
 | T-B1 | named layer API | #114 | ✅ **landed** — three image regimes around text/background |
 | T-B2 | per-layer damage tracking | #142 | ✅ closed OBE — persistent pixel state is independent of cell damage |
@@ -124,11 +128,11 @@ already existed under different titles.
 | T-D4 | shared-memory transfer path | #111 | ✅ **landed** (still optional for OBSCURA) |
 | T-E1 | negotiate keyboard protocol | #60 | ✅ **landed** |
 | T-E2 | press / repeat / release + modifiers | #60 | ✅ **landed** |
-| T-E3 | protocol loss mid-session → `ErrorEvent` | — | unfiled |
+| T-E3 | protocol loss mid-session → `ErrorEvent` | #351 | ✅ **landed** — v0.57.24 |
 | T-F1 | record/playback the event stream | #120 | ✅ **landed** |
 | T-F2 | injectable clock | #119, #118 | ✅ **landed** |
 | T-H4 | bytes-per-frame meter | #139 | ✅ **landed** — v0.6.8, `last_frame_bytes()` |
-| T-H5 | cell pixel geometry query + change event | #143 | ⚠ upstream issue closed after partial work; OBSCURA #17 remains open |
+| T-H5 | cell pixel geometry query + change event | #143 | ✅ **landed** — v0.57.25, newer than the pin |
 
 **T-E1/T-E2 landed.** `KeyAction{Press,Repeat,Release}`, `KeyEvent::action`,
 `KeyboardMode{Legacy,Disambiguate,Enhanced}`, `Capabilities::kitty_keyboard`,
@@ -170,18 +174,21 @@ resident sub-rectangle; and `AnimationFrame` carries an exact per-frame gap,
 including zero. TermForge closed T-C4 as obsolete because composing sources
 into one owned `Image`/`PixelSurface` before persistent submission already
 produces one resident id and one transmit. These are upstream facilities: the
-OBSCURA dissolve remains issue #23.
+OBSCURA playable-session integration remains issue #75; #23 records the
+completed upstream M0 spike.
 
 Deliberately unfiled per the *no speculative tickets* rule, until their milestone
-approaches: T-D3, T-D5, T-E3, T-F3, T-G1/G2/G3, T-H6.
+approaches: T-D5, T-F3, T-G2/G3, T-H6. T-D3's immediate need is downstream
+`EvidenceImageCache`; T-G1 is downstream `audio::Sink` / `audio::NullSink`.
 
 ## Filing library tickets
 One landable change per ticket; body is Motivation / Proposed API / Acceptance /
-Notes. Host-neutral bodies so the same text works for `gh` and `tea`. Never
-propose a third-party dependency inside termforge's shipped library (it is
-stdlib-only at runtime) and never propose a silent downgrade (degradation is an
-event). Mirror every body into `docs/tickets/T-XX.md` — issue IDs are never the
-source of truth.
+Notes. Public GitHub issues are the canonical request, discussion and state;
+stable T-series identifiers in the design preserve intent across issue numbers.
+Never propose a third-party dependency inside termforge's shipped library (it
+is stdlib-only at runtime) and never propose a silent downgrade (degradation is
+an event). Filing from an OBSCURA session is tracking work; implementation waits
+for a dedicated TermForge session.
 
 ## Do not
 - Do not build a generator or solver before the M1 fun gate passes. This is the

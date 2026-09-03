@@ -24,35 +24,33 @@ not an app — nothing in it is meant to be ported into the game.
 | File | What it is |
 |---|---|
 | `OBSCURA-design.html` | Canonical design spec, rev 2.0. Read fully before writing code. |
-| `../CLAUDE.md` | At the repo root. Hard rules, build commands, conventions, upstream status. |
+| `../AGENTS.md` | At the repo root. Hard rules, build commands, conventions, upstream status. |
 | `05-termforge-tickets.md` | Epics A–H with ready-to-file ticket bodies. |
-| `01-M0-render-spike.md` | The only milestone that starts today. Library work in termforge. |
-| `02-M1-fun-test.md` | First playable. One authored case. |
+| `01-M0-render-spike.md` | Completed render-spike milestone and historical upstream dependency record. |
+| `02-M1-fun-test.md` | Current milestone: first playable with one authored case. |
 | `03-M2-content-consequence.md` | Five cases, replay, RtAudio. |
 | `04-M3-M4-outline.md` | Generator/solver and the daily seed, at outline depth by design. |
 | `06-case-001-cold-lantern.md` | The authored M1 case: truth, evidence, redaction, solvability proof. |
-| `07-decision-records.md` | 14 decision records. Four are decided; the rest are open with tradeoffs. |
+| `07-decision-records.md` | 14 decision records with their tradeoffs and recorded outcomes. |
 | `08-determinism.md` | The bit-exactness contract and its CI gates. |
 | `09-screens.md` | Cell-accurate layouts for all five modes. |
 | `10-tile-grammar.md` | Tile sockets, ship classes, layer composition. Revises §6.1/§7.6 and M3. |
 
 ## Two tracks, one dependency order
-**The single most important thing in this package:** three of the capabilities the
-game needs do not exist in termforge yet — a layer/z-band API, incremental image
-frame edits (the dissolve), and the Kitty keyboard protocol with release events
-(the commit gesture). So:
+The original T-series dependencies have landed, the M0 gate passed, and this
+repository is now implementing M1. Keep the ownership boundary explicit:
 
 - **T-series = library work in termforge.** M0 is almost entirely this.
-- **M-series = game work in a new OBSCURA repo.**
-- Do not create the OBSCURA repository until the M0 gate passes. M0 lives in
-  termforge's own `examples/` where the test harness already is.
+- **M-series = game work in this OBSCURA repo.**
+- New TermForge work starts only when an active OBSCURA call site proves a
+  reusable library gap; application policy remains downstream.
 
 You are authorised to **open feature-request tickets against termforge** for the
 T-series. Follow the filing protocol in `05-termforge-tickets.md`: search before
 filing, one landable change per ticket, acceptance criteria a test can satisfy.
 
 ## Stack (fixed, do not substitute)
-- C++23, GCC 13+ / Clang 17+. Both compilers must build clean and pass.
+- C++23, GCC 13+ / Clang 19+. Both compilers must build clean and pass.
 - CMake >= 3.28. **No package manager** — `FetchContent` only.
 - Catch2 v3 via FetchContent. termforge as `termforge::lib`.
 - RtAudio for audio, **optional**, behind `OBSCURA_AUDIO`. See `03-M2`.
@@ -178,9 +176,9 @@ Correlated Kitty replies add four framing bytes to a multi-chunk image transfer;
 the one-chunk committed plate remains unchanged and inside its budget.
 
 The dependency activation retires OBSCURA #18, #19, #22 and #24. At the time it
-landed it did not implement #23's dissolve, settle #57/#58's art-layout
-decisions, or close #17: the upstream geometry issue was closed after only
-partial delivery.
+landed it did not complete the playable-session dissolve, settle #57/#58's
+art-layout decisions, or close #17: the upstream geometry issue was closed after
+only partial delivery.
 
 ## Plate layout resolution (2026-08-31)
 
@@ -188,5 +186,21 @@ Issues #57/#58 keep each compartment at 22x9 cells and define the 240x160 plate
 as a canonical source stretched into its 20x7-cell interior. The frame belongs
 to the hull band; the semantic room label remains glyph text after resolution.
 The existing interior-only plate therefore needs no re-bake, and display pixel
-geometry remains presentation rather than run state. The actual dissolve and
-the real-emulator quality gate remain #23 and #20/#26 respectively.
+geometry remains presentation rather than run state. The downstream dissolve
+integration is #75; #23 and #20/#26 record the completed upstream spike and M0
+quality gate.
+
+---
+
+# Corrections (2026-09-03)
+
+TermForge #143 is now fully delivered by PR #353 and released in v0.57.25: the
+base driver exposes reported cell-pixel geometry, and geometry-only changes
+produce a resize event. OBSCURA remains intentionally pinned to v0.57.24. Its
+current plate contract stretches the canonical 240x160 source into a 20x7-cell
+interior, so the newer query is available for future native re-rasterisation but
+is not an immediate dependency.
+
+The repository is public and GitHub issues are now the authoritative work
+record. Stable T-series names remain in the design documents, while issue bodies,
+discussion and state are not duplicated into a parallel ticket-file tree.
