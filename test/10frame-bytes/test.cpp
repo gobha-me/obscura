@@ -5,7 +5,7 @@
 //
 // The meter is T-H4 (termforge#139), which landed upstream in v0.6.8 — the
 // ticket the M0 plan flags "do this one first, everything else is measured
-// against it". This file is its first consumer here. The v0.57.20 pin keeps the
+// against it". This file is its first consumer here. The v0.57.24 pin keeps the
 // meter and activates the rest of the M0 TermForge primitives.
 //
 // No terminal, per CLAUDE.md: "Driver-facing tests are offline against an

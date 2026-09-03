@@ -49,7 +49,7 @@ You are authorised to file these against termforge yourself.
 | T-D5 | Author-declared metadata on atlas entries | M3 | unfiled |
 | T-E1 | Negotiate keyboard protocol with report-event-types | M1 | #60 ✅ landed |
 | T-E2 | Surface press/repeat/release + disambiguated modifiers | M1 | #60 ✅ landed |
-| T-E3 | Report keyboard-protocol loss mid-session as an event | M1 | unfiled |
+| T-E3 | Report keyboard-protocol loss mid-session as an event | M1 | #351 ✅ landed v0.57.24 |
 | T-F1 | Record and play back the coroutine event stream | M2 | #120 open |
 | T-F2 | Injectable clock for headless playback | M2 | #119, #118 open |
 | T-F3 | Golden-corpus harness in test support | M2 | unfiled |
@@ -62,7 +62,7 @@ You are authorised to file these against termforge yourself.
 
 ## Activation update (2026-08-31)
 
-OBSCURA now requires and fetches termforge v0.57.20. The M0 facilities behind
+OBSCURA now requires and fetches termforge v0.57.24. The M0 facilities behind
 the downstream wrapper issues are present in that pin:
 
 | Ticket | Upstream result |
@@ -73,6 +73,7 @@ the downstream wrapper issues are present in that pin:
 | T-C2 | #116 landed `AnimationFrame` with exact per-frame gaps, including zero. |
 | T-C4 | #141 closed OBE: compose into one owned image/surface, then submit one persistent payload. |
 | T-D1 | #113 landed explicit invalidation, stale-handle refusal and lifecycle coverage. |
+| T-E3 | #351 landed live keyboard-flag monitoring, held-key retirement and deterministic trace transitions. |
 
 This retires OBSCURA #18, #19, #22 and #24 as dependency blockers. T-H5 is the
 exception: termforge #143 is closed, but the driver-neutral query/change-event

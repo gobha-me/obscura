@@ -22,9 +22,11 @@
 
 #include <termforge/core/app.hpp>
 #include <termforge/core/screen.hpp>
+#include <termforge/widgets/dialogs.hpp>
 
 #include <obscura/core/ledger.hpp>
 #include <obscura/core/session.hpp>
+#include <obscura/input/commit_gesture.hpp>
 
 namespace obscura::core {
 
@@ -40,16 +42,32 @@ class App : public termforge::App {
 
   [[nodiscard]] auto session() const -> const Session& { return m_session; }
   [[nodiscard]] auto ledger() const -> const Ledger& { return m_ledger; }
+  [[nodiscard]] auto gesture_state() const noexcept -> input::GestureState {
+    return m_commit_gesture.state();
+  }
+  [[nodiscard]] auto input_mode() const noexcept -> input::InputMode {
+    return m_commit_gesture.mode();
+  }
 
  protected:
   // Draw the current frame. Pure virtual in termforge::App, so this override is
   // the minimum that makes the class instantiable — everything else on the base
-  // has a usable default (on_event already quits on ESC / Ctrl+C).
+  // has a usable default.
+  auto on_event(const termforge::Event& event) -> void override;
   auto on_render(termforge::Screen& screen) -> void override;
 
  private:
+  auto apply_gesture_effect(input::GestureEffect effect) -> void;
+  auto show_protocol_lost() -> void;
+
   Session m_session{};
   Ledger m_ledger{};
+  input::CommitGesture m_commit_gesture{};
+  termforge::MessageDialog m_protocol_lost{
+      "INPUT PROTOCOL LOST",
+      "Keyboard release reporting was lost. This run cannot continue safely.",
+      "Exit run"};
+  bool m_protocol_lost_visible{false};
 };
 
 } // namespace obscura::core
