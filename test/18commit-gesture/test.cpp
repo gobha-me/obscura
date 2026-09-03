@@ -130,6 +130,11 @@ TEST_CASE(
   CHECK(app.requirements().key_press);
   CHECK(app.requirements().key_repeat);
   CHECK(app.requirements().key_release);
+  CHECK(app.requirements().graphics);
+  CHECK(app.requirements().min_cols == 120);
+  CHECK(app.requirements().min_rows == 40);
+  CHECK(app.requirements().known_cell_pixels);
+  CHECK(app.requirements().min_cell_pixels == termforge::Extent{6, 12});
 
   app.deliver(termforge::ErrorEvent{
       termforge::Severity::Warning, "keyboard",
