@@ -274,9 +274,9 @@ TEST_CASE("SHIP refuses invalid inputs without changing the screen",
     CHECK(snapshot(screen) == before);
   }
 
-  SECTION("resolved rooms remain owned by the plate renderer") {
+  SECTION("resolved rooms without an exact plate remain unsupported") {
     Hull hull{};
-    REQUIRE(add_room(hull, 0, 0, Resolution::resolved) == 0);
+    REQUIRE(add_room(hull, 0, 0, Resolution::resolved, Damage::damaged) == 0);
     Screen screen = marked_screen();
     const auto before = snapshot(screen);
     CHECK(render_ship(screen, hull, 1, 0).status ==

@@ -27,6 +27,10 @@
 // to. These point at constexpr storage with no dynamic initialisation, so the
 // returned value outlives every caller and may be held.
 
+#include <optional>
+
+#include <obscura/world/model.hpp>
+
 #include <termforge/core/types.hpp>
 
 namespace obscura::render {
@@ -43,5 +47,12 @@ namespace obscura::render {
 // — stated twice on purpose, in two places that cannot both be edited by
 // accident.
 [[nodiscard]] auto hold_d0() -> termforge::EncodedImage;
+
+// Fail-closed lookup for the matrix that currently exists. Adding a new plate
+// means adding its explicit archetype/damage arm here; a resolved room must not
+// silently borrow artwork for a different compartment.
+[[nodiscard]] auto art_plate_for(world::Archetype archetype,
+                                 world::Damage damage)
+    -> std::optional<termforge::EncodedImage>;
 
 } // namespace obscura::render

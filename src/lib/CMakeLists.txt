@@ -105,6 +105,21 @@ if (${PROJECT_NAME}_BUILD_LIB)
     6069
   )
 
+  # The dissolve registers seven partial reveals plus hold-d0.png itself as one
+  # resident animation. Keep the generated headers private for the same reason
+  # as the canonical plate above. Each partial is independently capped at the
+  # canonical plate's payload limit; the aggregate wire contract is measured by
+  # test/20resolve-dissolve rather than approximated here.
+  foreach(_frame RANGE 1 7)
+    set(_suffix "0${_frame}")
+    obscura_embed_asset(
+      ${PROJECT_SOURCE_DIR}/assets/plates/hold-d0-dissolve/reveal-${_suffix}.png
+      kHoldD0Reveal${_suffix}
+      ${PROJECT_BINARY_DIR}/generated/obscura/render/hold_d0_reveal_${_suffix}.hpp
+      6069
+    )
+  endforeach()
+
   # The evidence image is an intentionally small terminal asset, not its
   # multi-megabyte authoring master. Pin the committed byte count so a visual
   # replacement cannot silently change compile memory or first-view traffic.

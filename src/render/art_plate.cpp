@@ -1,6 +1,9 @@
 #include <obscura/render/art_plate.hpp>
 
+#include <optional>
 #include <span>
+
+#include <obscura/world/model.hpp>
 
 #include <termforge/core/types.hpp>
 
@@ -21,6 +24,14 @@ auto hold_d0() -> termforge::EncodedImage {
       // the only check there is, since the library never parses a PNG.
       .pixels = termforge::Extent{.w = 240, .h = 160},
   };
+}
+
+auto art_plate_for(world::Archetype archetype, world::Damage damage)
+    -> std::optional<termforge::EncodedImage> {
+  if (archetype == world::Archetype::hold && damage == world::Damage::intact) {
+    return hold_d0();
+  }
+  return std::nullopt;
 }
 
 } // namespace obscura::render
