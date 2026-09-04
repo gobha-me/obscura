@@ -12,6 +12,8 @@
 #include <string_view>
 #include <vector>
 
+#include <obscura/render/art_plate.hpp>
+#include <obscura/render/dissolve.hpp>
 #include <obscura/render/glyph_substrate.hpp>
 #include <obscura/world/hull.hpp>
 #include <obscura/world/model.hpp>
@@ -39,6 +41,13 @@ constexpr termforge::Rgb kBackground{.r = 0x0A, .g = 0x0A, .b = 0x14};
 constexpr termforge::Rgb kIntactTint{.r = 0x0E, .g = 0x18, .b = 0x1D};
 constexpr termforge::Rgb kDamagedTint{.r = 0x2A, .g = 0x1B, .b = 0x08};
 constexpr termforge::Rgb kBreachedTint{.r = 0x2A, .g = 0x0B, .b = 0x10};
+constexpr termforge::Rgb kSettledTint{.r = 0x12, .g = 0x16, .b = 0x1A};
+constexpr std::array<char32_t, kDissolveGlyphSteps> kDissolveNoise{
+    U'+',
+    U'#',
+    U'%',
+    U'?',
+};
 
 struct ShipCell {
   char32_t glyph{U' '};
@@ -58,6 +67,12 @@ struct Marker {
 struct PreparedProjection {
   std::array<std::string, kShipMaximumCompartments> labels{};
   std::array<std::vector<Marker>, kShipMaximumCompartments> markers{};
+};
+
+struct PreparedFrame {
+  ShipFrame frame{};
+  std::array<ShipPlatePlacement, kShipMaximumCompartments> plates{};
+  std::size_t plate_count{0};
 };
 
 struct Point {
@@ -164,11 +179,13 @@ auto validate_rooms(const world::Hull& hull) -> ShipRenderStatus {
     if (room.id != index) {
       return ShipRenderStatus::invalid_layout;
     }
-    if (room.state == world::Resolution::resolved) {
+    if (room.state == world::Resolution::resolved &&
+        !art_plate_for(room.archetype, room.damage).has_value()) {
       return ShipRenderStatus::unsupported_resolution;
     }
     if (room.state != world::Resolution::unknown &&
-        room.state != world::Resolution::surveyed) {
+        room.state != world::Resolution::surveyed &&
+        room.state != world::Resolution::resolved) {
       return ShipRenderStatus::unsupported_resolution;
     }
     if (!damage_tint(room.damage).has_value()) {
@@ -226,7 +243,7 @@ auto prepare_projection(const ShipRenderInput& input,
       continue;
     }
     if (item.location >= rooms.size() ||
-        rooms[item.location].state != world::Resolution::surveyed) {
+        rooms[item.location].state == world::Resolution::unknown) {
       return ShipRenderStatus::invalid_projection;
     }
     auto& markers = prepared.markers.at(item.location);
@@ -260,6 +277,15 @@ auto validate_ship(const ShipRenderInput& input, PreparedProjection& prepared)
   }
   if (!validate_edges(hull)) {
     return ShipRenderStatus::invalid_layout;
+  }
+  if (input.dissolve.has_value()) {
+    const ShipDissolveInput& dissolve = *input.dissolve;
+    if (dissolve.room >= hull.room_count() ||
+        hull.all()[dissolve.room].state != world::Resolution::resolved ||
+        dissolve.visual.reveal_frame >= kDissolveRevealSteps ||
+        dissolve.visual.glyph_strata > kDissolveGlyphSteps) {
+      return ShipRenderStatus::invalid_projection;
+    }
   }
   for (const world::Compartment& room : hull.all()) {
     if (!hull.distance(input.cursor, room.id).has_value()) {
@@ -391,6 +417,61 @@ auto draw_surveyed(ShipFrame& frame, const world::Compartment& room,
   return true;
 }
 
+auto draw_resolved(PreparedFrame& prepared, const world::Compartment& room,
+                   std::string_view label, DissolveVisual visual) -> bool {
+  const auto damage = damage_tint(room.damage);
+  if (!damage.has_value()) {
+    return false;
+  }
+  const termforge::Rgb tint = visual.damage_tint ? *damage : kSettledTint;
+  const int origin_x = room.bounds.col;
+  const int origin_y = room.bounds.row;
+
+  for (int y = 1; y < kRoomHeight - 1; ++y) {
+    for (int x = 1; x < kRoomWidth - 1; ++x) {
+      set_cell(prepared.frame, origin_x + x, origin_y + y, U' ', kForeground,
+               tint);
+    }
+  }
+  for (int x = 1; x < kRoomWidth - 1; ++x) {
+    set_cell(prepared.frame, origin_x + x, origin_y, U'═');
+    set_cell(prepared.frame, origin_x + x, origin_y + kRoomHeight - 1, U'═');
+  }
+  for (int y = 1; y < kRoomHeight - 1; ++y) {
+    set_cell(prepared.frame, origin_x, origin_y + y, U'║');
+    set_cell(prepared.frame, origin_x + kRoomWidth - 1, origin_y + y, U'║');
+  }
+  set_cell(prepared.frame, origin_x, origin_y, U'╔');
+  set_cell(prepared.frame, origin_x + kRoomWidth - 1, origin_y, U'╗');
+  set_cell(prepared.frame, origin_x, origin_y + kRoomHeight - 1, U'╚');
+  set_cell(prepared.frame, origin_x + kRoomWidth - 1,
+           origin_y + kRoomHeight - 1, U'╝');
+  draw_ascii(prepared.frame, origin_x + 2, origin_y,
+             "[ " + std::string{label} + " ]");
+
+  for (int y = 0; y < kRoomHeight - 2; ++y) {
+    for (int x = 0; x < kRoomWidth - 2; ++x) {
+      const auto stratum = static_cast<std::size_t>((x * 7 + y * 11) % 4);
+      if (stratum >= visual.glyph_strata) {
+        continue;
+      }
+      set_cell(prepared.frame, origin_x + x + 1, origin_y + y + 1,
+               kDissolveNoise.at(stratum), kForeground, tint);
+    }
+  }
+
+  prepared.plates.at(prepared.plate_count) = {
+      .room = room.id,
+      .cells = {.x = origin_x + 1,
+                .y = origin_y + 1,
+                .w = kRoomWidth - 2,
+                .h = kRoomHeight - 2},
+      .reveal_frame = visual.reveal_frame,
+  };
+  ++prepared.plate_count;
+  return true;
+}
+
 auto draw_unknown(ShipFrame& frame, const world::Hull& hull,
                   const world::Compartment& room, std::uint64_t seed,
                   world::RoomId cursor) -> bool {
@@ -412,17 +493,27 @@ auto draw_unknown(ShipFrame& frame, const world::Hull& hull,
   return true;
 }
 
-auto draw_rooms(ShipFrame& frame, const ShipRenderInput& input,
-                const PreparedProjection& prepared) -> bool {
+auto draw_rooms(PreparedFrame& frame, const ShipRenderInput& input,
+                const PreparedProjection& projection) -> bool {
   const world::Hull& hull = input.hull.get();
   for (const world::Compartment& room : hull.all()) {
     if (room.state == world::Resolution::unknown) {
-      if (!draw_unknown(frame, hull, room, input.seed, input.cursor)) {
+      if (!draw_unknown(frame.frame, hull, room, input.seed, input.cursor)) {
         return false;
       }
-    } else if (!draw_surveyed(frame, room, prepared.labels.at(room.id),
-                              prepared.markers.at(room.id))) {
-      return false;
+    } else if (room.state == world::Resolution::surveyed) {
+      if (!draw_surveyed(frame.frame, room, projection.labels.at(room.id),
+                         projection.markers.at(room.id))) {
+        return false;
+      }
+    } else {
+      DissolveVisual visual = dissolve_visual(kDissolveSteps - 1);
+      if (input.dissolve.has_value() && input.dissolve->room == room.id) {
+        visual = input.dissolve->visual;
+      }
+      if (!draw_resolved(frame, room, projection.labels.at(room.id), visual)) {
+        return false;
+      }
     }
   }
   return true;
@@ -451,13 +542,13 @@ auto draw_chrome(ShipFrame& frame) -> void {
 
 auto compose_frame(const ShipRenderInput& input,
                    const PreparedProjection& prepared)
-    -> std::optional<ShipFrame> {
-  ShipFrame frame{};
+    -> std::optional<PreparedFrame> {
+  PreparedFrame frame{};
   if (!draw_rooms(frame, input, prepared)) {
     return std::nullopt;
   }
-  draw_edges(frame, input.hull.get());
-  draw_chrome(frame);
+  draw_edges(frame.frame, input.hull.get());
+  draw_chrome(frame.frame);
   return frame;
 }
 
@@ -540,8 +631,16 @@ auto draw_ship(termforge::Screen& screen, const ShipRenderInput& input)
       .w = kShipReferenceColumns,
       .h = kShipReferenceRows,
   };
-  paint(screen, *frame, viewport);
-  return {.status = ShipRenderStatus::drawn, .viewport = viewport};
+  paint(screen, frame->frame, viewport);
+  ShipRenderResult result{.status = ShipRenderStatus::drawn,
+                          .viewport = viewport,
+                          .plates = frame->plates,
+                          .plate_count = frame->plate_count};
+  for (std::size_t index = 0; index < result.plate_count; ++index) {
+    result.plates.at(index).cells.x += viewport.x;
+    result.plates.at(index).cells.y += viewport.y;
+  }
+  return result;
 }
 
 } // namespace obscura::render

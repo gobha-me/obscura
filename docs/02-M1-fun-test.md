@@ -74,7 +74,10 @@ T-G1 (`AudioSink` interface + `NullSink`, stdlib-only).
 - [x] Survey firm-up (UNKNOWN → SURVEYED): wireframe plus damage tint in the cell
       backgrounds, evidence markers
       ([PR #68](https://github.com/gobha-me/obscura/pull/68)).
-- [ ] Resolve dissolve, ported from the M0 spike
+- [x] Resolve-dissolve presentation seam, ported from the M0 spike: the complete
+      13-step transition, resident-image lifecycle, skip convergence and SHIP
+      placement are implemented. The correct-batch simulation trigger remains
+      owned by issue #40
       ([issue #75](https://github.com/gobha-me/obscura/issues/75)).
 - [x] **Evidence log with real inline images** (Unicode placeholders, already
       supported by termforge). Build this in M1, not M2 — it is the screenshot

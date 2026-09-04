@@ -102,6 +102,28 @@ else ()
   set_tests_properties(plate-bake-check PROPERTIES WILL_FAIL TRUE)
 endif ()
 
+# The seven committed partial reveal frames are derived from the canonical
+# HOLD D-0 plate. The final dissolve frame is that plate itself, so this check
+# proves the intermediates still converge on the exact shipped source rather
+# than on a duplicated snapshot that can drift.
+if (Python3_FOUND)
+  add_test(
+    NAME dissolve-bake-check
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/tools/dissolve-bake.py
+            --source ${PROJECT_SOURCE_DIR}/assets/plates/hold-d0.png
+            --check ${PROJECT_SOURCE_DIR}/assets/plates/hold-d0-dissolve
+  )
+else ()
+  add_test(
+    NAME dissolve-bake-check
+    COMMAND ${CMAKE_COMMAND} -E echo
+      "dissolve-bake-check: python3 was not found, so the committed reveal "
+      "frames could not be checked against assets/plates/hold-d0.png."
+  )
+  set_tests_properties(dissolve-bake-check PROPERTIES WILL_FAIL TRUE)
+endif ()
+
 if (EXISTS ${PROJECT_SOURCE_DIR}/NEW_PROJECT.md)
   add_test(
     NAME artifact-check-selftest
